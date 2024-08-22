@@ -1,0 +1,950 @@
+{
+  "id": "project_1",
+  "name": "Hidden Words",
+  "properties": {},
+  "elements": [
+    {
+      "id": "app_1",
+      "name": "Main App",
+      "properties": {
+        "maxWidth": 500,
+        "fonts": "Chelsea Market"
+      },
+      "elements": [
+        {
+          "id": "page_1",
+          "name": "Main Page",
+          "properties": {},
+          "elements": [
+            {
+              "id": "data_3",
+              "name": "Word",
+              "properties": {},
+              "kind": "Data"
+            },
+            {
+              "id": "data_8",
+              "name": "Columns",
+              "properties": {
+                "initialValue": {
+                  "expr": "[]"
+                }
+              },
+              "kind": "Data"
+            },
+            {
+              "id": "data_9",
+              "name": "Column Offsets",
+              "properties": {
+                "initialValue": {
+                  "expr": "[]"
+                }
+              },
+              "kind": "Data"
+            },
+            {
+              "id": "data_1",
+              "name": "Status",
+              "properties": {
+                "initialValue": {
+                  "expr": "'Ready'"
+                }
+              },
+              "kind": "Data"
+            },
+            {
+              "id": "data_2",
+              "name": "Score",
+              "properties": {
+                "initialValue": {
+                  "expr": "0"
+                }
+              },
+              "kind": "Data"
+            },
+            {
+              "id": "data_7",
+              "name": "Round Skipped",
+              "properties": {
+                "initialValue": {
+                  "expr": "false"
+                }
+              },
+              "kind": "Data"
+            },
+            {
+              "id": "calculation_25",
+              "name": "All Letters",
+              "properties": {
+                "calculation": {
+                  "expr": "Split('abcdefghijklmnopqrstuvwxyz')"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_26",
+              "name": "Candidate Words",
+              "properties": {
+                "calculation": {
+                  "expr": "Select(WordList(), And(Len($item) >= 5, Len($item) <= 7))"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_15",
+              "name": "Letters",
+              "properties": {
+                "calculation": {
+                  "expr": "Split(Word)"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_24",
+              "name": "Num Rows",
+              "properties": {
+                "calculation": {
+                  "expr": "4"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "function_14",
+              "name": "Letter Row",
+              "properties": {
+                "input1": "rowIndex",
+                "calculation": {
+                  "expr": "ForEach(Columns, ItemAt($item, (rowIndex + ItemAt(ColumnOffsets, $index)) % NumRows))"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "calculation_27",
+              "name": "Letter Rows",
+              "properties": {
+                "calculation": {
+                  "expr": "ForEach(Range(0, NumRows - 1), LetterRow($item))"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_14",
+              "name": "Is Round Won",
+              "properties": {
+                "calculation": {
+                  "expr": "And(Not(RoundSkipped), Eq(Join(First(LetterRows)), Word))"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_20",
+              "name": "Is Round Failed",
+              "properties": {
+                "calculation": {
+                  "expr": "false"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_8",
+              "name": "When Round Complete",
+              "properties": {
+                "calculation": {
+                  "expr": "IsRoundComplete"
+                },
+                "whenTrueAction": {
+                  "expr": "EndRound()"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_23",
+              "name": "Is Round Complete",
+              "properties": {
+                "calculation": {
+                  "expr": "Or(IsRoundWon, IsRoundFailed, RoundSkipped, Not(GameRunning))"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_12",
+              "name": "Round In Play",
+              "properties": {
+                "calculation": {
+                  "expr": "Not(IsRoundComplete)"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_9",
+              "name": "Game Running",
+              "properties": {
+                "calculation": {
+                  "expr": "Or(Status == 'Playing', Status == 'Paused')"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "timer_1",
+              "name": "Game Timer",
+              "properties": {
+                "period": 180,
+                "interval": 1,
+                "show": false,
+                "endAction": {
+                  "expr": "EndGame()"
+                }
+              },
+              "kind": "Timer"
+            },
+            {
+              "id": "function_5",
+              "name": "Points",
+              "properties": {
+                "calculation": {
+                  "expr": "Len(Word) * 3\n"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_15",
+              "name": "Rotate Up",
+              "properties": {
+                "input1": "column",
+                "calculation": {
+                  "expr": "let offset = ItemAt(ColumnOffsets, column)\nlet newOffset = (offset + 1) % NumRows\nUpdate(ColumnOffsets, {[column]: newOffset})"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_16",
+              "name": "Rotate Down",
+              "properties": {
+                "input1": "column",
+                "calculation": {
+                  "expr": "let offset = ItemAt(ColumnOffsets, column)\nlet newOffset = If(offset > 0, offset - 1, NumRows - 1)\nUpdate(ColumnOffsets, {[column]: newOffset})"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_13",
+              "name": "Column Letters",
+              "properties": {
+                "input1": "correctLetter",
+                "calculation": {
+                  "expr": "FlatList(correctLetter, Shuffle(RandomListFrom(WithoutItems(AllLetters, correctLetter), NumRows - 1)))"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_12",
+              "name": "Setup New Round",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "let word = RandomFrom(CandidateWords)\nlet letters = Split(word)\nlet cols = ForEach(letters, ColumnLetters($item))\nlet firstOffset = 0\nSet(Word, word)\nSet(Columns, cols)\nSet(ColumnOffsets, ForEach(letters, Random(NumRows)))\nLog(word, cols)\nReset()\n"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_6",
+              "name": "Start New Game",
+              "properties": {
+                "calculation": {
+                  "expr": "Reset(Score)\nReset(GameTimer)\nSet(Status, 'Playing')\nStartNewRound()\nGameTimer.Start()"
+                },
+                "action": true
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_7",
+              "name": "Start New Round",
+              "properties": {
+                "calculation": {
+                  "expr": "Reset(RoundSkipped)\nSetupNewRound()"
+                },
+                "action": true
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_8",
+              "name": "End Round",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "If(IsRoundWon, Set(Score, Score + Points(false)))\nSet(ColumnOffsets, ForEach(Columns, 0))"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_9",
+              "name": "End Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "Set(Status, 'Ended')\nEndRound()"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_10",
+              "name": "Pause Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "Set(Status, 'Paused')\nGameTimer.Stop()"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_11",
+              "name": "Continue Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "Set(Status, 'Playing')\nGameTimer.Start()"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "text_18",
+              "name": "Title",
+              "properties": {
+                "content": "Hidden Words",
+                "styles": {
+                  "fontFamily": "Chelsea Market",
+                  "fontSize": "28",
+                  "color": "#039a03"
+                }
+              },
+              "kind": "Text"
+            },
+            {
+              "id": "dialog_1",
+              "name": "Instructions",
+              "properties": {
+                "initiallyOpen": false,
+                "layout": "vertical",
+                "showCloseButton": true,
+                "styles": {
+                  "padding": "2em"
+                }
+              },
+              "elements": [
+                {
+                  "id": "text_3",
+                  "name": "Instructions Text",
+                  "properties": {
+                    "content": "You have to find a word hidden in a grid of letters.\n\n\nClick the arrow buttons to move the letters around each column so that the word appears in the top row. \n\n\nThere may by chance be other words you can make from the random letters in the grid, but there is just one that will get you the points.\n\n\nIf you're stuck you can skip a word.\n\n\nClick Next Word after each word to get another one.\n\n\n<b>Tips</b>\n<ul>\n  <li>Words may be plural</li>\n  <li>Longer words score more points</li>\n</ul>\n\nYou have 3 minutes to find as many words as you can.",
+                    "allowHtml": true
+                  },
+                  "kind": "Text"
+                },
+                {
+                  "id": "button_2",
+                  "name": "Start Game 2",
+                  "properties": {
+                    "action": {
+                      "expr": "StartNewGame()\nInstructions.Close()"
+                    },
+                    "show": {
+                      "expr": "Not(GameRunning)"
+                    },
+                    "content": "Start Game",
+                    "appearance": "filled"
+                  },
+                  "kind": "Button"
+                }
+              ],
+              "kind": "Dialog"
+            },
+            {
+              "id": "block_8",
+              "name": "Stats Layout",
+              "properties": {
+                "layout": "horizontal wrapped",
+                "styles": {
+                  "fontSize": "24"
+                }
+              },
+              "elements": [
+                {
+                  "id": "text_4",
+                  "name": "Score Display",
+                  "properties": {
+                    "content": {
+                      "expr": "Score + \" points\""
+                    },
+                    "styles": {
+                      "fontSize": "inherit",
+                      "color": "blue",
+                      "marginRight": "100"
+                    },
+                    "show": {
+                      "expr": "Or(GameRunning, Status == 'Ended')"
+                    }
+                  },
+                  "kind": "Text"
+                },
+                {
+                  "id": "text_5",
+                  "name": "Time Display",
+                  "properties": {
+                    "content": {
+                      "expr": "Ceiling(GameTimer. remainingTime) + \"s left\""
+                    },
+                    "styles": {
+                      "fontSize": "inherit",
+                      "color": "green"
+                    },
+                    "show": {
+                      "expr": "GameRunning"
+                    }
+                  },
+                  "kind": "Text"
+                },
+                {
+                  "id": "text_6",
+                  "name": "Game Over",
+                  "properties": {
+                    "content": "Game Over",
+                    "styles": {
+                      "fontSize": "inherit",
+                      "color": "white",
+                      "backgroundColor": "green",
+                      "padding": "0 0.5em",
+                      "borderRadius": "8px"
+                    },
+                    "show": {
+                      "expr": "Status == 'Ended'"
+                    }
+                  },
+                  "kind": "Text"
+                }
+              ],
+              "kind": "Block"
+            },
+            {
+              "id": "block_9",
+              "name": "Ready Panel",
+              "properties": {
+                "show": {
+                  "expr": "Status == 'Ready'"
+                },
+                "styles": {
+                  "padding": "0"
+                }
+              },
+              "elements": [
+                {
+                  "id": "text_7",
+                  "name": "Title",
+                  "properties": {
+                    "content": "Welcome!",
+                    "styles": {
+                      "color": "#039a03",
+                      "fontFamily": "Chelsea Market",
+                      "fontSize": "28"
+                    }
+                  },
+                  "kind": "Text"
+                },
+                {
+                  "id": "text_8",
+                  "name": "Ready Text",
+                  "properties": {
+                    "content": "Find words hidden in a grid of letters\n\nClick Instructions for full details\n\nOr Start Game to dive straight in!",
+                    "styles": {
+                      "fontSize": "20"
+                    }
+                  },
+                  "kind": "Text"
+                }
+              ],
+              "kind": "Block"
+            },
+            {
+              "id": "block_7",
+              "name": "Play Panel",
+              "properties": {
+                "layout": "vertical",
+                "show": {
+                  "expr": "Or(Status == 'Playing', Status == 'Ended')"
+                },
+                "styles": {
+                  "width": "100%",
+                  "padding": "0"
+                }
+              },
+              "elements": [
+                {
+                  "id": "block_24",
+                  "name": "Letter Grid",
+                  "properties": {},
+                  "elements": [
+                    {
+                      "id": "itemset_1",
+                      "name": "Grid Items",
+                      "properties": {
+                        "items": {
+                          "expr": "LetterRows"
+                        },
+                        "selectable": "none"
+                      },
+                      "elements": [
+                        {
+                          "id": "text_24",
+                          "name": "Row Text",
+                          "properties": {
+                            "content": {
+                              "expr": "Join($item)"
+                            },
+                            "styles": {
+                              "fontSize": "40",
+                              "lineHeight": "0.9em",
+                              "letterSpacing": "0.4em",
+                              "fontFamily": "monospace",
+                              "outlineOffset": "5px",
+                              "borderRadius": "5px",
+                              "outlineWidth": "2px",
+                              "outlineStyle": {
+                                "expr": "If($index == 0, 'solid', '')"
+                              },
+                              "outlineColor": "orange"
+                            }
+                          },
+                          "kind": "Text"
+                        }
+                      ],
+                      "kind": "ItemSet"
+                    },
+                    {
+                      "id": "block_25",
+                      "name": "Up Rotators",
+                      "properties": {
+                        "layout": "horizontal",
+                        "styles": {
+                          "gap": "0"
+                        }
+                      },
+                      "elements": [
+                        {
+                          "id": "itemset_2",
+                          "name": "Item Set 2",
+                          "properties": {
+                            "items": {
+                              "expr": "Range(0, Len(Word) -1)"
+                            }
+                          },
+                          "elements": [
+                            {
+                              "id": "icon_1",
+                              "name": "Up",
+                              "properties": {
+                                "iconName": "expand_less",
+                                "action": {
+                                  "expr": "RotateUp($item)"
+                                },
+                                "styles": {
+                                  "padding": "0",
+                                  "fontSize": "38",
+                                  "color": "black",
+                                  "border": "1px solid gray"
+                                }
+                              },
+                              "kind": "Icon"
+                            }
+                          ],
+                          "kind": "ItemSet"
+                        }
+                      ],
+                      "kind": "Block"
+                    },
+                    {
+                      "id": "block_26",
+                      "name": "Down Rotators",
+                      "properties": {
+                        "layout": "horizontal",
+                        "styles": {
+                          "gap": "0"
+                        },
+                        "show": false
+                      },
+                      "elements": [
+                        {
+                          "id": "itemset_3",
+                          "name": "Item Set 3",
+                          "properties": {
+                            "items": {
+                              "expr": "Range(0, Len(Word) -1)"
+                            }
+                          },
+                          "elements": [
+                            {
+                              "id": "icon_2",
+                              "name": "Down",
+                              "properties": {
+                                "iconName": "expand_more",
+                                "action": {
+                                  "expr": "RotateDown($item)"
+                                },
+                                "styles": {
+                                  "color": "black",
+                                  "fontSize": "38",
+                                  "border": "1px solid gray",
+                                  "padding": "0"
+                                }
+                              },
+                              "kind": "Icon"
+                            }
+                          ],
+                          "kind": "ItemSet"
+                        }
+                      ],
+                      "kind": "Block"
+                    }
+                  ],
+                  "kind": "Block"
+                },
+                {
+                  "id": "text_21",
+                  "name": "Round Won",
+                  "properties": {
+                    "content": {
+                      "expr": "'Correct! ' + Points(false) + ' points added'"
+                    },
+                    "show": {
+                      "expr": "IsRoundWon"
+                    }
+                  },
+                  "kind": "Text"
+                },
+                {
+                  "id": "text_22",
+                  "name": "Round Failed",
+                  "properties": {
+                    "content": {
+                      "expr": "'Sorry - ' "
+                    },
+                    "show": {
+                      "expr": "IsRoundFailed"
+                    }
+                  },
+                  "kind": "Text"
+                },
+                {
+                  "id": "text_23",
+                  "name": "Round Skipped",
+                  "properties": {
+                    "content": "Skipped",
+                    "show": {
+                      "expr": "RoundSkipped"
+                    }
+                  },
+                  "kind": "Text"
+                },
+                {
+                  "id": "block_20",
+                  "name": "Play Controls",
+                  "properties": {
+                    "layout": "horizontal wrapped"
+                  },
+                  "elements": [
+                    {
+                      "id": "button_12",
+                      "name": "Do Something",
+                      "properties": {
+                        "enabled": {
+                          "expr": "Not(IsRoundComplete)"
+                        }
+                      },
+                      "kind": "Button"
+                    },
+                    {
+                      "id": "button_13",
+                      "name": "Do Something else",
+                      "properties": {
+                        "enabled": {
+                          "expr": "Not(IsRoundComplete)"
+                        }
+                      },
+                      "kind": "Button"
+                    }
+                  ],
+                  "kind": "Block"
+                },
+                {
+                  "id": "block_12",
+                  "name": "Ended Panel",
+                  "properties": {
+                    "show": {
+                      "expr": "Status == 'Ended'"
+                    }
+                  },
+                  "elements": [
+                    {
+                      "id": "text_13",
+                      "name": "Title",
+                      "properties": {
+                        "content": "Congratulations!",
+                        "styles": {
+                          "fontFamily": "Chelsea Market",
+                          "fontSize": "28",
+                          "color": "#039a03"
+                        }
+                      },
+                      "kind": "Text"
+                    },
+                    {
+                      "id": "text_14",
+                      "name": "Score",
+                      "properties": {
+                        "content": {
+                          "expr": "'You have scored ' + Score + ' points!'"
+                        }
+                      },
+                      "kind": "Text"
+                    },
+                    {
+                      "id": "text_15",
+                      "name": "What next",
+                      "properties": {
+                        "content": "Click Start Game to have another go"
+                      },
+                      "kind": "Text"
+                    }
+                  ],
+                  "kind": "Block"
+                },
+                {
+                  "id": "block_19",
+                  "name": "Round Controls",
+                  "properties": {
+                    "layout": "horizontal"
+                  },
+                  "elements": [
+                    {
+                      "id": "button_9",
+                      "name": "New Round",
+                      "properties": {
+                        "action": {
+                          "expr": "StartNewRound()"
+                        },
+                        "show": {
+                          "expr": "Status == 'Playing' && IsRoundComplete"
+                        },
+                        "content": "Next word",
+                        "appearance": "filled"
+                      },
+                      "kind": "Button"
+                    },
+                    {
+                      "id": "button_10",
+                      "name": "Skip Round",
+                      "properties": {
+                        "action": {
+                          "expr": "Set(RoundSkipped, true)"
+                        },
+                        "show": {
+                          "expr": "Status == 'Playing' && Not(IsRoundComplete)"
+                        },
+                        "content": "Skip this one"
+                      },
+                      "kind": "Button"
+                    }
+                  ],
+                  "kind": "Block"
+                }
+              ],
+              "kind": "Block"
+            },
+            {
+              "id": "block_10",
+              "name": "Pause Panel",
+              "properties": {
+                "show": {
+                  "expr": "Status == 'Paused'"
+                },
+                "styles": {
+                  "padding": "0"
+                }
+              },
+              "elements": [
+                {
+                  "id": "text_9",
+                  "name": "Title",
+                  "properties": {
+                    "content": "Paused...",
+                    "styles": {
+                      "color": "#7529df",
+                      "fontFamily": "Luckiest Guy",
+                      "fontSize": "28"
+                    }
+                  },
+                  "kind": "Text"
+                },
+                {
+                  "id": "text_10",
+                  "name": "Pause Text",
+                  "properties": {
+                    "content": "Click Continue Game to carry on",
+                    "styles": {
+                      "fontSize": "20"
+                    }
+                  },
+                  "kind": "Text"
+                }
+              ],
+              "kind": "Block"
+            },
+            {
+              "id": "block_23",
+              "name": "Spacer",
+              "properties": {
+                "styles": {
+                  "borderBottom": "2px solid lightgray",
+                  "width": "100%"
+                }
+              },
+              "kind": "Block"
+            },
+            {
+              "id": "block_13",
+              "name": "Game Controls",
+              "properties": {
+                "layout": "horizontal",
+                "styles": {
+                  "paddingTop": "20px"
+                }
+              },
+              "elements": [
+                {
+                  "id": "button_4",
+                  "name": "Start Game",
+                  "properties": {
+                    "action": {
+                      "expr": "StartNewGame()"
+                    },
+                    "show": {
+                      "expr": "Not(GameRunning)"
+                    },
+                    "appearance": "filled"
+                  },
+                  "kind": "Button"
+                },
+                {
+                  "id": "button_5",
+                  "name": "Stop Game",
+                  "properties": {
+                    "action": {
+                      "expr": "EndGame()"
+                    },
+                    "show": {
+                      "expr": "GameRunning"
+                    }
+                  },
+                  "kind": "Button"
+                },
+                {
+                  "id": "button_6",
+                  "name": "Pause Game",
+                  "properties": {
+                    "action": {
+                      "expr": "PauseGame()"
+                    },
+                    "show": {
+                      "expr": "Status == 'Playing'"
+                    }
+                  },
+                  "kind": "Button"
+                },
+                {
+                  "id": "button_7",
+                  "name": "Continue Game",
+                  "properties": {
+                    "action": {
+                      "expr": "ContinueGame()"
+                    },
+                    "show": {
+                      "expr": "Status == 'Paused'"
+                    }
+                  },
+                  "kind": "Button"
+                },
+                {
+                  "id": "button_8",
+                  "name": "Instructions",
+                  "properties": {
+                    "action": {
+                      "expr": "Instructions.Show()"
+                    }
+                  },
+                  "kind": "Button"
+                }
+              ],
+              "kind": "Block"
+            }
+          ],
+          "kind": "Page"
+        },
+        {
+          "id": "functionimport_1",
+          "name": "WordList",
+          "properties": {
+            "source": "words2.js",
+            "exportName": "Words"
+          },
+          "kind": "FunctionImport"
+        }
+      ],
+      "kind": "App"
+    },
+    {
+      "id": "_TOOLS",
+      "name": "Tools",
+      "properties": {},
+      "kind": "ToolFolder"
+    },
+    {
+      "id": "_COMPONENTS",
+      "name": "Components",
+      "properties": {},
+      "kind": "ComponentFolder"
+    }
+  ],
+  "kind": "Project"
+}
