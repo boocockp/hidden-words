@@ -26,8 +26,11 @@ const MainPage_ItemSet2Item = React.memo(function MainPage_ItemSet2Item(props) {
     const parentPathWith = name => Elemento.parentPath(props.path) + '.' + name
     const {$item, $itemId, $index, $selected, onClick} = props
     const {ItemSetItem, Icon} = Elemento.components
+    const {And, Not, ListContains} = Elemento.globalFunctions
     const _state = Elemento.useGetStore()
     const RotateUp = _state.useObject(parentPathWith('RotateUp'))
+    const RoundInPlay = _state.useObject(parentPathWith('RoundInPlay'))
+    const FixedColumns = _state.useObject(parentPathWith('FixedColumns'))
     const Up_action = React.useCallback(wrapFn(pathTo('Up'), 'action', async () => {
         await RotateUp($item)
     }), [RotateUp, $item])
@@ -35,26 +38,8 @@ const MainPage_ItemSet2Item = React.memo(function MainPage_ItemSet2Item(props) {
     const styles = undefined
 
     return React.createElement(ItemSetItem, {path: props.path, item: $item, itemId: $itemId, index: $index, onClick, canDragItem, styles},
-        React.createElement(Icon, elProps(pathTo('Up')).iconName('expand_less').action(Up_action).styles(elProps(pathTo('Up.Styles')).padding('0').fontSize('38').color('black').border('1px solid gray').props).props),
-    )
-})
-
-
-const MainPage_ItemSet3Item = React.memo(function MainPage_ItemSet3Item(props) {
-    const pathTo = name => props.path + '.' + name
-    const parentPathWith = name => Elemento.parentPath(props.path) + '.' + name
-    const {$item, $itemId, $index, $selected, onClick} = props
-    const {ItemSetItem, Icon} = Elemento.components
-    const _state = Elemento.useGetStore()
-    const RotateDown = _state.useObject(parentPathWith('RotateDown'))
-    const Down_action = React.useCallback(wrapFn(pathTo('Down'), 'action', async () => {
-        await RotateDown($item)
-    }), [RotateDown, $item])
-    const canDragItem = undefined
-    const styles = undefined
-
-    return React.createElement(ItemSetItem, {path: props.path, item: $item, itemId: $itemId, index: $index, onClick, canDragItem, styles},
-        React.createElement(Icon, elProps(pathTo('Down')).iconName('expand_more').action(Down_action).styles(elProps(pathTo('Down.Styles')).color('black').fontSize('38').border('1px solid gray').padding('0').props).props),
+        React.createElement(Icon, elProps(pathTo('Up')).iconName('expand_less').action(Up_action).show(And(RoundInPlay, Not(ListContains(FixedColumns, $index)))).styles(elProps(pathTo('Up.Styles')).padding('0').fontSize('38').color('black').border('1px solid gray').props).props),
+        React.createElement(Icon, elProps(pathTo('Fixed')).iconName('check').show(ListContains(FixedColumns, $index)).styles(elProps(pathTo('Fixed.Styles')).padding('0').fontSize('38').color('green').props).props),
     )
 })
 
@@ -62,22 +47,30 @@ const MainPage_ItemSet3Item = React.memo(function MainPage_ItemSet3Item(props) {
 function MainPage(props) {
     const pathTo = name => props.path + '.' + name
     const {Page, Data, Calculation, Timer, TextElement, Dialog, Button, Block, ItemSet} = Elemento.components
-    const {Split, Select, And, Len, ForEach, ItemAt, Range, Not, Eq, Join, First, Or, If, FlatList, Shuffle, RandomListFrom, WithoutItems, RandomFrom, Random, Log, Ceiling} = Elemento.globalFunctions
+    const {Range, Len, Split, Select, And, ItemAt, ForEach, Not, Eq, Join, First, Or, If, WithoutItems, RandomFrom, FlatList, Shuffle, RandomListFrom, Random, Ceiling} = Elemento.globalFunctions
     const {Update, Set, Reset} = Elemento.appFunctions
     const _state = Elemento.useGetStore()
     const Word = _state.setObject(pathTo('Word'), new Data.State(stateProps(pathTo('Word')).props))
     const Columns = _state.setObject(pathTo('Columns'), new Data.State(stateProps(pathTo('Columns')).value([]).props))
     const ColumnOffsets = _state.setObject(pathTo('ColumnOffsets'), new Data.State(stateProps(pathTo('ColumnOffsets')).value([]).props))
+    const FixedColumns = _state.setObject(pathTo('FixedColumns'), new Data.State(stateProps(pathTo('FixedColumns')).value([]).props))
     const Status = _state.setObject(pathTo('Status'), new Data.State(stateProps(pathTo('Status')).value('Ready').props))
     const Score = _state.setObject(pathTo('Score'), new Data.State(stateProps(pathTo('Score')).value(0).props))
     const RoundSkipped = _state.setObject(pathTo('RoundSkipped'), new Data.State(stateProps(pathTo('RoundSkipped')).value(false).props))
+    const ColumnIndexes = _state.setObject(pathTo('ColumnIndexes'), new Calculation.State(stateProps(pathTo('ColumnIndexes')).value(Range(0, Len(Word) -1)).props))
     const AllLetters = _state.setObject(pathTo('AllLetters'), new Calculation.State(stateProps(pathTo('AllLetters')).value(Split('abcdefghijklmnopqrstuvwxyz')).props))
     const CandidateWords = _state.setObject(pathTo('CandidateWords'), new Calculation.State(stateProps(pathTo('CandidateWords')).value(Select(WordList(), ($item, $index) => And(Len($item) >= 5, Len($item) <= 7))).props))
     const Letters = _state.setObject(pathTo('Letters'), new Calculation.State(stateProps(pathTo('Letters')).value(Split(Word)).props))
     const NumRows = _state.setObject(pathTo('NumRows'), new Calculation.State(stateProps(pathTo('NumRows')).value(4).props))
-    const LetterRow = _state.setObject(pathTo('LetterRow'), React.useCallback(wrapFn(pathTo('LetterRow'), 'calculation', (rowIndex) => {
-        return ForEach(Columns, ($item, $index) => ItemAt($item, (rowIndex + ItemAt(ColumnOffsets, $index)) % NumRows))
+    const ColumnLetter = _state.setObject(pathTo('ColumnLetter'), React.useCallback(wrapFn(pathTo('ColumnLetter'), 'calculation', (rowIndex, colIndex) => {
+        let column = ItemAt(Columns, colIndex)
+        let rowOffset = ItemAt(ColumnOffsets, colIndex)
+        let row = (rowIndex + rowOffset) % NumRows
+        return ItemAt(column, row)
     }), [Columns, ColumnOffsets, NumRows]))
+    const LetterRow = _state.setObject(pathTo('LetterRow'), React.useCallback(wrapFn(pathTo('LetterRow'), 'calculation', (rowIndex) => {
+        return ForEach(Columns, ($item, $index) => ColumnLetter(rowIndex, $index))
+    }), [Columns, ColumnLetter]))
     const LetterRows = _state.setObject(pathTo('LetterRows'), new Calculation.State(stateProps(pathTo('LetterRows')).value(ForEach(Range(0, NumRows - 1), ($item, $index) => LetterRow($item))).props))
     const IsRoundWon = _state.setObject(pathTo('IsRoundWon'), new Calculation.State(stateProps(pathTo('IsRoundWon')).value(And(Not(RoundSkipped), Eq(Join(First(LetterRows)), Word))).props))
     const IsRoundFailed = _state.setObject(pathTo('IsRoundFailed'), new Calculation.State(stateProps(pathTo('IsRoundFailed')).value(false).props))
@@ -85,8 +78,9 @@ function MainPage(props) {
     const IsRoundComplete = _state.setObject(pathTo('IsRoundComplete'), new Calculation.State(stateProps(pathTo('IsRoundComplete')).value(Or(IsRoundWon, IsRoundFailed, RoundSkipped, Not(GameRunning))).props))
     const RoundInPlay = _state.setObject(pathTo('RoundInPlay'), new Calculation.State(stateProps(pathTo('RoundInPlay')).value(Not(IsRoundComplete)).props))
     const Points = _state.setObject(pathTo('Points'), React.useCallback(wrapFn(pathTo('Points'), 'calculation', () => {
-        return Len(Word) * 3
-    }), [Word]))
+        let lettersGuessed = Len(Word) - Len(FixedColumns)
+        return lettersGuessed * 3
+    }), [Word, FixedColumns]))
     const RotateUp = _state.setObject(pathTo('RotateUp'), React.useCallback(wrapFn(pathTo('RotateUp'), 'calculation', (column) => {
         let offset = ItemAt(ColumnOffsets, column)
         let newOffset = (offset + 1) % NumRows
@@ -97,6 +91,12 @@ function MainPage(props) {
         let newOffset = If(offset > 0, () => offset - 1, () => NumRows - 1)
         return Update(ColumnOffsets, {[column]: newOffset})
     }), [ColumnOffsets, NumRows]))
+    const GiveClue = _state.setObject(pathTo('GiveClue'), React.useCallback(wrapFn(pathTo('GiveClue'), 'calculation', () => {
+        let unfixedCols = WithoutItems(ColumnIndexes, FixedColumns)
+        let newFixedCol = RandomFrom(unfixedCols)
+        Set(FixedColumns, FlatList(FixedColumns, newFixedCol))
+        return Update(ColumnOffsets, {[newFixedCol]: 0})
+    }), [ColumnIndexes, FixedColumns, ColumnOffsets]))
     const ColumnLetters = _state.setObject(pathTo('ColumnLetters'), React.useCallback(wrapFn(pathTo('ColumnLetters'), 'calculation', (correctLetter) => {
         return FlatList(correctLetter, Shuffle(RandomListFrom(WithoutItems(AllLetters, correctLetter), NumRows - 1)))
     }), [AllLetters, NumRows]))
@@ -108,9 +108,8 @@ function MainPage(props) {
         Set(Word, word)
         Set(Columns, cols)
         Set(ColumnOffsets, ForEach(letters, ($item, $index) => Random(NumRows)))
-        Log(word, cols)
-        return Reset()
-    }), [CandidateWords, ColumnLetters, Word, Columns, ColumnOffsets, NumRows]))
+        return Reset(FixedColumns)
+    }), [CandidateWords, ColumnLetters, Word, Columns, ColumnOffsets, NumRows, FixedColumns]))
     const StartNewRound = _state.setObject(pathTo('StartNewRound'), React.useCallback(wrapFn(pathTo('StartNewRound'), 'calculation', () => {
         Reset(RoundSkipped)
         return SetupNewRound()
@@ -153,10 +152,7 @@ function MainPage(props) {
     const LetterGrid = _state.setObject(pathTo('LetterGrid'), new Block.State(stateProps(pathTo('LetterGrid')).props))
     const GridItems = _state.setObject(pathTo('GridItems'), new ItemSet.State(stateProps(pathTo('GridItems')).items(LetterRows).selectable('none').props))
     const UpRotators = _state.setObject(pathTo('UpRotators'), new Block.State(stateProps(pathTo('UpRotators')).props))
-    const ItemSet2 = _state.setObject(pathTo('ItemSet2'), new ItemSet.State(stateProps(pathTo('ItemSet2')).items(Range(0, Len(Word) -1)).props))
-    const DownRotators = _state.setObject(pathTo('DownRotators'), new Block.State(stateProps(pathTo('DownRotators')).props))
-    const ItemSet3 = _state.setObject(pathTo('ItemSet3'), new ItemSet.State(stateProps(pathTo('ItemSet3')).items(Range(0, Len(Word) -1)).props))
-    const PlayControls = _state.setObject(pathTo('PlayControls'), new Block.State(stateProps(pathTo('PlayControls')).props))
+    const ItemSet2 = _state.setObject(pathTo('ItemSet2'), new ItemSet.State(stateProps(pathTo('ItemSet2')).items(ColumnIndexes).props))
     const EndedPanel = _state.setObject(pathTo('EndedPanel'), new Block.State(stateProps(pathTo('EndedPanel')).props))
     const RoundControls = _state.setObject(pathTo('RoundControls'), new Block.State(stateProps(pathTo('RoundControls')).props))
     const PausePanel = _state.setObject(pathTo('PausePanel'), new Block.State(stateProps(pathTo('PausePanel')).props))
@@ -166,6 +162,9 @@ function MainPage(props) {
         await StartNewGame()
         await Instructions.Close()
     }), [StartNewGame, Instructions])
+    const GiveMeAClue_action = React.useCallback(wrapFn(pathTo('GiveMeAClue'), 'action', async () => {
+        await GiveClue()
+    }), [GiveClue])
     const NewRound_action = React.useCallback(wrapFn(pathTo('NewRound'), 'action', async () => {
         await StartNewRound()
     }), [StartNewRound])
@@ -193,9 +192,11 @@ function MainPage(props) {
         React.createElement(Data, elProps(pathTo('Word')).display(false).props),
         React.createElement(Data, elProps(pathTo('Columns')).display(false).props),
         React.createElement(Data, elProps(pathTo('ColumnOffsets')).display(false).props),
+        React.createElement(Data, elProps(pathTo('FixedColumns')).display(false).props),
         React.createElement(Data, elProps(pathTo('Status')).display(false).props),
         React.createElement(Data, elProps(pathTo('Score')).display(false).props),
         React.createElement(Data, elProps(pathTo('RoundSkipped')).display(false).props),
+        React.createElement(Calculation, elProps(pathTo('ColumnIndexes')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('AllLetters')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('CandidateWords')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('Letters')).show(false).props),
@@ -216,7 +217,12 @@ function MainPage(props) {
 Click the arrow buttons to move the letters around each column so that the word appears in the top row. 
 
 
-There may by chance be other words you can make from the random letters in the grid, but there is just one that will get you the points.
+<b>Note</b>
+
+There will often be other words you can make from the random letters in the grid, but there is just one that will get you the points.
+
+
+To make it easier, you can click Give Me A Clue to fix some of the letters in the word, but you will earn fewer points.
 
 
 If you're stuck you can skip a word.
@@ -253,25 +259,20 @@ Or Start Game to dive straight in!`).props),
             React.createElement(Block, elProps(pathTo('UpRotators')).layout('horizontal').styles(elProps(pathTo('UpRotators.Styles')).gap('0').props).props,
             React.createElement(ItemSet, elProps(pathTo('ItemSet2')).itemContentComponent(MainPage_ItemSet2Item).props),
     ),
-            React.createElement(Block, elProps(pathTo('DownRotators')).layout('horizontal').show(false).styles(elProps(pathTo('DownRotators.Styles')).gap('0').props).props,
-            React.createElement(ItemSet, elProps(pathTo('ItemSet3')).itemContentComponent(MainPage_ItemSet3Item).props),
     ),
-    ),
-            React.createElement(TextElement, elProps(pathTo('RoundWon')).show(IsRoundWon).content('Correct! ' + Points(false) + ' points added').props),
-            React.createElement(TextElement, elProps(pathTo('RoundFailed')).show(IsRoundFailed).content('Sorry - ').props),
+            React.createElement(TextElement, elProps(pathTo('RoundInPlayText')).show(RoundInPlay).content(Points() + ' points for this word').props),
+            React.createElement(TextElement, elProps(pathTo('RoundWon')).show(IsRoundWon).content('Correct! ' + Points() + ' points added').props),
+            React.createElement(TextElement, elProps(pathTo('RoundFailed')).show(IsRoundFailed).content('Sorry - no points').props),
             React.createElement(TextElement, elProps(pathTo('RoundSkipped')).show(RoundSkipped).content('Skipped').props),
-            React.createElement(Block, elProps(pathTo('PlayControls')).layout('horizontal wrapped').props,
-            React.createElement(Button, elProps(pathTo('DoSomething')).content('Do Something').appearance('outline').enabled(Not(IsRoundComplete)).props),
-            React.createElement(Button, elProps(pathTo('DoSomethingelse')).content('Do Something else').appearance('outline').enabled(Not(IsRoundComplete)).props),
-    ),
             React.createElement(Block, elProps(pathTo('EndedPanel')).layout('vertical').show(Status == 'Ended').props,
             React.createElement(TextElement, elProps(pathTo('Title')).styles(elProps(pathTo('Title.Styles')).fontFamily('Chelsea Market').fontSize('28').color('#039a03').props).content('Congratulations!').props),
             React.createElement(TextElement, elProps(pathTo('Score')).content('You have scored ' + Score + ' points!').props),
             React.createElement(TextElement, elProps(pathTo('Whatnext')).content('Click Start Game to have another go').props),
     ),
             React.createElement(Block, elProps(pathTo('RoundControls')).layout('horizontal').props,
+            React.createElement(Button, elProps(pathTo('GiveMeAClue')).content('Give Me A Clue').appearance('outline').show(Not(IsRoundComplete)).enabled(Len(FixedColumns) < Len(Word) - 2).action(GiveMeAClue_action).props),
             React.createElement(Button, elProps(pathTo('NewRound')).content('Next word').appearance('filled').show(Status == 'Playing' && IsRoundComplete).action(NewRound_action).props),
-            React.createElement(Button, elProps(pathTo('SkipRound')).content('Skip this one').appearance('outline').show(Status == 'Playing' && Not(IsRoundComplete)).action(SkipRound_action).props),
+            React.createElement(Button, elProps(pathTo('SkipRound')).content('Skip Word').appearance('outline').show(Status == 'Playing' && Not(IsRoundComplete)).action(SkipRound_action).props),
     ),
     ),
         React.createElement(Block, elProps(pathTo('PausePanel')).layout('vertical').show(Status == 'Paused').styles(elProps(pathTo('PausePanel.Styles')).padding('0').props).props,
@@ -290,13 +291,13 @@ Or Start Game to dive straight in!`).props),
 }
 
 // appMain.js
-export default function MainApp(props) {
-    const pathTo = name => 'MainApp' + '.' + name
+export default function HiddenWords(props) {
+    const pathTo = name => 'HiddenWords' + '.' + name
     const {App} = Elemento.components
     const pages = {MainPage}
     const appContext = Elemento.useGetAppContext()
     const _state = Elemento.useGetStore()
-    const app = _state.setObject('MainApp', new App.State({pages, appContext}))
+    const app = _state.setObject('HiddenWords', new App.State({pages, appContext}))
 
-    return React.createElement(App, {...elProps('MainApp').maxWidth(500).fonts(['Chelsea Market']).props},)
+    return React.createElement(App, {...elProps('HiddenWords').maxWidth(500).fonts(['Chelsea Market']).props},)
 }

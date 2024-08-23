@@ -5,7 +5,7 @@
   "elements": [
     {
       "id": "app_1",
-      "name": "Main App",
+      "name": "Hidden Words",
       "properties": {
         "maxWidth": 500,
         "fonts": "Chelsea Market"
@@ -43,6 +43,16 @@
               "kind": "Data"
             },
             {
+              "id": "data_10",
+              "name": "Fixed Columns",
+              "properties": {
+                "initialValue": {
+                  "expr": "[]"
+                }
+              },
+              "kind": "Data"
+            },
+            {
               "id": "data_1",
               "name": "Status",
               "properties": {
@@ -71,6 +81,17 @@
                 }
               },
               "kind": "Data"
+            },
+            {
+              "id": "calculation_28",
+              "name": "Column Indexes",
+              "properties": {
+                "calculation": {
+                  "expr": "Range(0, Len(Word) -1)"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
             },
             {
               "id": "calculation_25",
@@ -117,12 +138,24 @@
               "kind": "Calculation"
             },
             {
+              "id": "function_18",
+              "name": "Column Letter",
+              "properties": {
+                "input1": "rowIndex",
+                "calculation": {
+                  "expr": "let column = ItemAt(Columns, colIndex)\nlet rowOffset = ItemAt(ColumnOffsets, colIndex)\nlet row = (rowIndex + rowOffset) % NumRows\nItemAt(column, row)"
+                },
+                "input2": "colIndex"
+              },
+              "kind": "Function"
+            },
+            {
               "id": "function_14",
               "name": "Letter Row",
               "properties": {
                 "input1": "rowIndex",
                 "calculation": {
-                  "expr": "ForEach(Columns, ItemAt($item, (rowIndex + ItemAt(ColumnOffsets, $index)) % NumRows))"
+                  "expr": "ForEach(Columns, ColumnLetter(rowIndex, $index))"
                 }
               },
               "kind": "Function"
@@ -225,7 +258,7 @@
               "name": "Points",
               "properties": {
                 "calculation": {
-                  "expr": "Len(Word) * 3\n"
+                  "expr": "let lettersGuessed = Len(Word) - Len(FixedColumns)\nlettersGuessed * 3\n"
                 }
               },
               "kind": "Function"
@@ -253,6 +286,16 @@
               "kind": "Function"
             },
             {
+              "id": "function_17",
+              "name": "Give Clue",
+              "properties": {
+                "calculation": {
+                  "expr": "let unfixedCols = WithoutItems(ColumnIndexes, FixedColumns)\nlet newFixedCol = RandomFrom(unfixedCols)\nSet(FixedColumns, FlatList(FixedColumns, newFixedCol))\nUpdate(ColumnOffsets, {[newFixedCol]: 0})"
+                }
+              },
+              "kind": "Function"
+            },
+            {
               "id": "function_13",
               "name": "Column Letters",
               "properties": {
@@ -269,7 +312,7 @@
               "properties": {
                 "action": true,
                 "calculation": {
-                  "expr": "let word = RandomFrom(CandidateWords)\nlet letters = Split(word)\nlet cols = ForEach(letters, ColumnLetters($item))\nlet firstOffset = 0\nSet(Word, word)\nSet(Columns, cols)\nSet(ColumnOffsets, ForEach(letters, Random(NumRows)))\nLog(word, cols)\nReset()\n"
+                  "expr": "let word = RandomFrom(CandidateWords)\nlet letters = Split(word)\nlet cols = ForEach(letters, ColumnLetters($item))\nlet firstOffset = 0\nSet(Word, word)\nSet(Columns, cols)\nSet(ColumnOffsets, ForEach(letters, Random(NumRows)))\nReset(FixedColumns)\n"
                 }
               },
               "kind": "Function"
@@ -369,7 +412,7 @@
                   "id": "text_3",
                   "name": "Instructions Text",
                   "properties": {
-                    "content": "You have to find a word hidden in a grid of letters.\n\n\nClick the arrow buttons to move the letters around each column so that the word appears in the top row. \n\n\nThere may by chance be other words you can make from the random letters in the grid, but there is just one that will get you the points.\n\n\nIf you're stuck you can skip a word.\n\n\nClick Next Word after each word to get another one.\n\n\n<b>Tips</b>\n<ul>\n  <li>Words may be plural</li>\n  <li>Longer words score more points</li>\n</ul>\n\nYou have 3 minutes to find as many words as you can.",
+                    "content": "You have to find a word hidden in a grid of letters.\n\n\nClick the arrow buttons to move the letters around each column so that the word appears in the top row. \n\n\n<b>Note</b>\n\nThere will often be other words you can make from the random letters in the grid, but there is just one that will get you the points.\n\n\nTo make it easier, you can click Give Me A Clue to fix some of the letters in the word, but you will earn fewer points.\n\n\nIf you're stuck you can skip a word.\n\n\nClick Next Word after each word to get another one.\n\n\n<b>Tips</b>\n<ul>\n  <li>Words may be plural</li>\n  <li>Longer words score more points</li>\n</ul>\n\nYou have 3 minutes to find as many words as you can.",
                     "allowHtml": true
                   },
                   "kind": "Text"
@@ -567,7 +610,7 @@
                           "name": "Item Set 2",
                           "properties": {
                             "items": {
-                              "expr": "Range(0, Len(Word) -1)"
+                              "expr": "ColumnIndexes"
                             }
                           },
                           "elements": [
@@ -575,7 +618,9 @@
                               "id": "icon_1",
                               "name": "Up",
                               "properties": {
-                                "iconName": "expand_less",
+                                "iconName": {
+                                  "expr": "'expand_less' "
+                                },
                                 "action": {
                                   "expr": "RotateUp($item)"
                                 },
@@ -584,49 +629,25 @@
                                   "fontSize": "38",
                                   "color": "black",
                                   "border": "1px solid gray"
+                                },
+                                "show": {
+                                  "expr": "And(RoundInPlay, Not(ListContains(FixedColumns, $index)))"
                                 }
                               },
                               "kind": "Icon"
-                            }
-                          ],
-                          "kind": "ItemSet"
-                        }
-                      ],
-                      "kind": "Block"
-                    },
-                    {
-                      "id": "block_26",
-                      "name": "Down Rotators",
-                      "properties": {
-                        "layout": "horizontal",
-                        "styles": {
-                          "gap": "0"
-                        },
-                        "show": false
-                      },
-                      "elements": [
-                        {
-                          "id": "itemset_3",
-                          "name": "Item Set 3",
-                          "properties": {
-                            "items": {
-                              "expr": "Range(0, Len(Word) -1)"
-                            }
-                          },
-                          "elements": [
+                            },
                             {
-                              "id": "icon_2",
-                              "name": "Down",
+                              "id": "icon_3",
+                              "name": "Fixed",
                               "properties": {
-                                "iconName": "expand_more",
-                                "action": {
-                                  "expr": "RotateDown($item)"
-                                },
+                                "iconName": "check",
                                 "styles": {
-                                  "color": "black",
+                                  "padding": "0",
                                   "fontSize": "38",
-                                  "border": "1px solid gray",
-                                  "padding": "0"
+                                  "color": "green"
+                                },
+                                "show": {
+                                  "expr": "ListContains(FixedColumns, $index)"
                                 }
                               },
                               "kind": "Icon"
@@ -641,11 +662,24 @@
                   "kind": "Block"
                 },
                 {
+                  "id": "text_25",
+                  "name": "Round In Play Text",
+                  "properties": {
+                    "content": {
+                      "expr": "Points() + ' points for this word'"
+                    },
+                    "show": {
+                      "expr": "RoundInPlay"
+                    }
+                  },
+                  "kind": "Text"
+                },
+                {
                   "id": "text_21",
                   "name": "Round Won",
                   "properties": {
                     "content": {
-                      "expr": "'Correct! ' + Points(false) + ' points added'"
+                      "expr": "'Correct! ' + Points() + ' points added'"
                     },
                     "show": {
                       "expr": "IsRoundWon"
@@ -658,7 +692,7 @@
                   "name": "Round Failed",
                   "properties": {
                     "content": {
-                      "expr": "'Sorry - ' "
+                      "expr": "'Sorry - no points' "
                     },
                     "show": {
                       "expr": "IsRoundFailed"
@@ -676,36 +710,6 @@
                     }
                   },
                   "kind": "Text"
-                },
-                {
-                  "id": "block_20",
-                  "name": "Play Controls",
-                  "properties": {
-                    "layout": "horizontal wrapped"
-                  },
-                  "elements": [
-                    {
-                      "id": "button_12",
-                      "name": "Do Something",
-                      "properties": {
-                        "enabled": {
-                          "expr": "Not(IsRoundComplete)"
-                        }
-                      },
-                      "kind": "Button"
-                    },
-                    {
-                      "id": "button_13",
-                      "name": "Do Something else",
-                      "properties": {
-                        "enabled": {
-                          "expr": "Not(IsRoundComplete)"
-                        }
-                      },
-                      "kind": "Button"
-                    }
-                  ],
-                  "kind": "Block"
                 },
                 {
                   "id": "block_12",
@@ -758,6 +762,22 @@
                   },
                   "elements": [
                     {
+                      "id": "button_12",
+                      "name": "Give Me A Clue",
+                      "properties": {
+                        "action": {
+                          "expr": "GiveClue()"
+                        },
+                        "show": {
+                          "expr": "Not(IsRoundComplete)"
+                        },
+                        "enabled": {
+                          "expr": "Len(FixedColumns) < Len(Word) - 2"
+                        }
+                      },
+                      "kind": "Button"
+                    },
+                    {
                       "id": "button_9",
                       "name": "New Round",
                       "properties": {
@@ -782,7 +802,7 @@
                         "show": {
                           "expr": "Status == 'Playing' && Not(IsRoundComplete)"
                         },
-                        "content": "Skip this one"
+                        "content": "Skip Word"
                       },
                       "kind": "Button"
                     }
