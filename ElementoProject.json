@@ -176,7 +176,7 @@
               "name": "Is Round Won",
               "properties": {
                 "calculation": {
-                  "expr": "And(Not(RoundSkipped), Eq(Join(First(LetterRows)), Word))"
+                  "expr": "And(GameRunning, Not(RoundSkipped), Eq(Join(First(LetterRows)), Word))"
                 },
                 "show": false
               },
@@ -303,6 +303,18 @@
                 "calculation": {
                   "expr": "FlatList(correctLetter, Shuffle(RandomListFrom(WithoutItems(AllLetters, correctLetter), NumRows - 1)))"
                 }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_19",
+              "name": "Row Html",
+              "properties": {
+                "input1": "letters",
+                "calculation": {
+                  "expr": "let letterItems = ForEach(letters, If(useHtml && ListContains(FixedColumns, $index), `<span style='color: green'>${$item}</span>`, $item))\nJoin(letterItems)"
+                },
+                "input2": "useHtml"
               },
               "kind": "Function"
             },
@@ -574,7 +586,7 @@
                           "name": "Row Text",
                           "properties": {
                             "content": {
-                              "expr": "Join($item)"
+                              "expr": "RowHtml($item, $index == 0)"
                             },
                             "styles": {
                               "fontSize": "40",
@@ -588,7 +600,8 @@
                                 "expr": "If($index == 0, 'solid', '')"
                               },
                               "outlineColor": "orange"
-                            }
+                            },
+                            "allowHtml": true
                           },
                           "kind": "Text"
                         }

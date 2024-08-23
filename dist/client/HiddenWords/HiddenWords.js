@@ -10,13 +10,14 @@ const MainPage_GridItemsItem = React.memo(function MainPage_GridItemsItem(props)
     const parentPathWith = name => Elemento.parentPath(props.path) + '.' + name
     const {$item, $itemId, $index, $selected, onClick} = props
     const {ItemSetItem, TextElement} = Elemento.components
-    const {Join, If} = Elemento.globalFunctions
+    const {If} = Elemento.globalFunctions
     const _state = Elemento.useGetStore()
+    const RowHtml = _state.useObject(parentPathWith('RowHtml'))
     const canDragItem = undefined
     const styles = undefined
 
     return React.createElement(ItemSetItem, {path: props.path, item: $item, itemId: $itemId, index: $index, onClick, canDragItem, styles},
-        React.createElement(TextElement, elProps(pathTo('RowText')).styles(elProps(pathTo('RowText.Styles')).fontSize('40').lineHeight('0.9em').letterSpacing('0.4em').fontFamily('monospace').outlineOffset('5px').borderRadius('5px').outlineWidth('2px').outlineStyle(If($index == 0, 'solid', '')).outlineColor('orange').props).content(Join($item)).props),
+        React.createElement(TextElement, elProps(pathTo('RowText')).allowHtml(true).styles(elProps(pathTo('RowText.Styles')).fontSize('40').lineHeight('0.9em').letterSpacing('0.4em').fontFamily('monospace').outlineOffset('5px').borderRadius('5px').outlineWidth('2px').outlineStyle(If($index == 0, 'solid', '')).outlineColor('orange').props).content(RowHtml($item, $index == 0)).props),
     )
 })
 
@@ -47,7 +48,7 @@ const MainPage_ItemSet2Item = React.memo(function MainPage_ItemSet2Item(props) {
 function MainPage(props) {
     const pathTo = name => props.path + '.' + name
     const {Page, Data, Calculation, Timer, TextElement, Dialog, Button, Block, ItemSet} = Elemento.components
-    const {Range, Len, Split, Select, And, ItemAt, ForEach, Not, Eq, Join, First, Or, If, WithoutItems, RandomFrom, FlatList, Shuffle, RandomListFrom, Random, Ceiling} = Elemento.globalFunctions
+    const {Range, Len, Split, Select, And, ItemAt, ForEach, Not, Eq, Join, First, Or, If, WithoutItems, RandomFrom, FlatList, Shuffle, RandomListFrom, ListContains, Random, Ceiling} = Elemento.globalFunctions
     const {Update, Set, Reset} = Elemento.appFunctions
     const _state = Elemento.useGetStore()
     const Word = _state.setObject(pathTo('Word'), new Data.State(stateProps(pathTo('Word')).props))
@@ -72,9 +73,9 @@ function MainPage(props) {
         return ForEach(Columns, ($item, $index) => ColumnLetter(rowIndex, $index))
     }), [Columns, ColumnLetter]))
     const LetterRows = _state.setObject(pathTo('LetterRows'), new Calculation.State(stateProps(pathTo('LetterRows')).value(ForEach(Range(0, NumRows - 1), ($item, $index) => LetterRow($item))).props))
-    const IsRoundWon = _state.setObject(pathTo('IsRoundWon'), new Calculation.State(stateProps(pathTo('IsRoundWon')).value(And(Not(RoundSkipped), Eq(Join(First(LetterRows)), Word))).props))
     const IsRoundFailed = _state.setObject(pathTo('IsRoundFailed'), new Calculation.State(stateProps(pathTo('IsRoundFailed')).value(false).props))
     const GameRunning = _state.setObject(pathTo('GameRunning'), new Calculation.State(stateProps(pathTo('GameRunning')).value(Or(Status == 'Playing', Status == 'Paused')).props))
+    const IsRoundWon = _state.setObject(pathTo('IsRoundWon'), new Calculation.State(stateProps(pathTo('IsRoundWon')).value(And(GameRunning, Not(RoundSkipped), Eq(Join(First(LetterRows)), Word))).props))
     const IsRoundComplete = _state.setObject(pathTo('IsRoundComplete'), new Calculation.State(stateProps(pathTo('IsRoundComplete')).value(Or(IsRoundWon, IsRoundFailed, RoundSkipped, Not(GameRunning))).props))
     const RoundInPlay = _state.setObject(pathTo('RoundInPlay'), new Calculation.State(stateProps(pathTo('RoundInPlay')).value(Not(IsRoundComplete)).props))
     const Points = _state.setObject(pathTo('Points'), React.useCallback(wrapFn(pathTo('Points'), 'calculation', () => {
@@ -100,6 +101,10 @@ function MainPage(props) {
     const ColumnLetters = _state.setObject(pathTo('ColumnLetters'), React.useCallback(wrapFn(pathTo('ColumnLetters'), 'calculation', (correctLetter) => {
         return FlatList(correctLetter, Shuffle(RandomListFrom(WithoutItems(AllLetters, correctLetter), NumRows - 1)))
     }), [AllLetters, NumRows]))
+    const RowHtml = _state.setObject(pathTo('RowHtml'), React.useCallback(wrapFn(pathTo('RowHtml'), 'calculation', (letters, useHtml) => {
+        let letterItems = ForEach(letters, ($item, $index) => If(useHtml && ListContains(FixedColumns, $index), () => `<span style='color: green'>${$item}</span>`, $item))
+        return Join(letterItems)
+    }), [FixedColumns]))
     const SetupNewRound = _state.setObject(pathTo('SetupNewRound'), React.useCallback(wrapFn(pathTo('SetupNewRound'), 'calculation', () => {
         let word = RandomFrom(CandidateWords)
         let letters = Split(word)
