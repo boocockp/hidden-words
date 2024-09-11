@@ -221,16 +221,10 @@ function MainPage(props) {
 
 Click the arrow buttons to move the letters around each column so that the word appears in the top row. 
 
-
-<b>Note</b>
-
-There will often be other words you can make from the random letters in the grid, but there is just one that will get you the points.
+<b>Note</b> - there will often be other words you can make from the random letters in the grid, but there is just one that will get you the points.
 
 
-To make it easier, you can click Give Me A Clue to fix some of the letters in the word, but you will earn fewer points.
-
-
-If you're stuck you can skip a word.
+To make it easier, you can click Give Me A Clue to fix some of the letters in the word, but you will earn fewer points.  Or click Skip Word to move on if you're stuck.
 
 
 Click Next Word after each word to get another one.

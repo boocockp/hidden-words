@@ -424,7 +424,7 @@
                   "id": "text_3",
                   "name": "Instructions Text",
                   "properties": {
-                    "content": "You have to find a word hidden in a grid of letters.\n\n\nClick the arrow buttons to move the letters around each column so that the word appears in the top row. \n\n\n<b>Note</b>\n\nThere will often be other words you can make from the random letters in the grid, but there is just one that will get you the points.\n\n\nTo make it easier, you can click Give Me A Clue to fix some of the letters in the word, but you will earn fewer points.\n\n\nIf you're stuck you can skip a word.\n\n\nClick Next Word after each word to get another one.\n\n\n<b>Tips</b>\n<ul>\n  <li>Words may be plural</li>\n  <li>Longer words score more points</li>\n</ul>\n\nYou have 3 minutes to find as many words as you can.",
+                    "content": "You have to find a word hidden in a grid of letters.\n\n\nClick the arrow buttons to move the letters around each column so that the word appears in the top row. \n\n<b>Note</b> - there will often be other words you can make from the random letters in the grid, but there is just one that will get you the points.\n\n\nTo make it easier, you can click Give Me A Clue to fix some of the letters in the word, but you will earn fewer points.  Or click Skip Word to move on if you're stuck.\n\n\nClick Next Word after each word to get another one.\n\n\n<b>Tips</b>\n<ul>\n  <li>Words may be plural</li>\n  <li>Longer words score more points</li>\n</ul>\n\nYou have 3 minutes to find as many words as you can.",
                     "allowHtml": true
                   },
                   "kind": "Text"
