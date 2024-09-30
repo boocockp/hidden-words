@@ -14,7 +14,11 @@
         {
           "id": "page_1",
           "name": "Main Page",
-          "properties": {},
+          "properties": {
+            "styles": {
+              "gap": "4px"
+            }
+          },
           "elements": [
             {
               "id": "data_3",
@@ -562,7 +566,8 @@
                 },
                 "styles": {
                   "width": "100%",
-                  "padding": "0"
+                  "padding": "0",
+                  "position": "relative"
                 }
               },
               "elements": [
@@ -660,7 +665,7 @@
                                   "color": "green"
                                 },
                                 "show": {
-                                  "expr": "ListContains(FixedColumns, $index)"
+                                  "expr": "And(RoundInPlay, ListContains(FixedColumns, $index))"
                                 }
                               },
                               "kind": "Icon"
@@ -730,6 +735,17 @@
                   "properties": {
                     "show": {
                       "expr": "Status == 'Ended'"
+                    },
+                    "styles": {
+                      "position": "absolute",
+                      "top": "140",
+                      "left": "150",
+                      "translate": "-50% -50%",
+                      "backgroundColor": "lightblue",
+                      "borderRadius": "10",
+                      "border": "2px solid blue",
+                      "minWidth": "18em",
+                      "padding": "1em"
                     }
                   },
                   "elements": [
@@ -760,7 +776,7 @@
                       "id": "text_15",
                       "name": "What next",
                       "properties": {
-                        "content": "Click Start Game to have another go"
+                        "content": "Click Start Game to play again"
                       },
                       "kind": "Text"
                     }
@@ -865,23 +881,13 @@
               "kind": "Block"
             },
             {
-              "id": "block_23",
-              "name": "Spacer",
-              "properties": {
-                "styles": {
-                  "borderBottom": "2px solid lightgray",
-                  "width": "100%"
-                }
-              },
-              "kind": "Block"
-            },
-            {
               "id": "block_13",
               "name": "Game Controls",
               "properties": {
                 "layout": "horizontal",
                 "styles": {
-                  "paddingTop": "20px"
+                  "paddingTop": "20px",
+                  "marginTop": "4px"
                 }
               },
               "elements": [
@@ -908,7 +914,8 @@
                     },
                     "show": {
                       "expr": "GameRunning"
-                    }
+                    },
+                    "content": "Stop"
                   },
                   "kind": "Button"
                 },
@@ -921,7 +928,8 @@
                     },
                     "show": {
                       "expr": "Status == 'Playing'"
-                    }
+                    },
+                    "content": "Pause"
                   },
                   "kind": "Button"
                 },
@@ -934,7 +942,8 @@
                     },
                     "show": {
                       "expr": "Status == 'Paused'"
-                    }
+                    },
+                    "content": "Resume"
                   },
                   "kind": "Button"
                 },
@@ -944,7 +953,8 @@
                   "properties": {
                     "action": {
                       "expr": "Instructions.Show()"
-                    }
+                    },
+                    "content": "Help"
                   },
                   "kind": "Button"
                 }

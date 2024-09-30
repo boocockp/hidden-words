@@ -40,7 +40,7 @@ const MainPage_ItemSet2Item = React.memo(function MainPage_ItemSet2Item(props) {
 
     return React.createElement(ItemSetItem, {path: props.path, item: $item, itemId: $itemId, index: $index, onClick, canDragItem, styles},
         React.createElement(Icon, elProps(pathTo('Up')).iconName('expand_less').action(Up_action).show(And(RoundInPlay, Not(ListContains(FixedColumns, $index)))).styles(elProps(pathTo('Up.Styles')).padding('0').fontSize('38').color('black').border('1px solid gray').props).props),
-        React.createElement(Icon, elProps(pathTo('Fixed')).iconName('check').show(ListContains(FixedColumns, $index)).styles(elProps(pathTo('Fixed.Styles')).padding('0').fontSize('38').color('green').props).props),
+        React.createElement(Icon, elProps(pathTo('Fixed')).iconName('check').show(And(RoundInPlay, ListContains(FixedColumns, $index))).styles(elProps(pathTo('Fixed.Styles')).padding('0').fontSize('38').color('green').props).props),
     )
 })
 
@@ -161,7 +161,6 @@ function MainPage(props) {
     const EndedPanel = _state.setObject(pathTo('EndedPanel'), new Block.State(stateProps(pathTo('EndedPanel')).props))
     const RoundControls = _state.setObject(pathTo('RoundControls'), new Block.State(stateProps(pathTo('RoundControls')).props))
     const PausePanel = _state.setObject(pathTo('PausePanel'), new Block.State(stateProps(pathTo('PausePanel')).props))
-    const Spacer = _state.setObject(pathTo('Spacer'), new Block.State(stateProps(pathTo('Spacer')).props))
     const GameControls = _state.setObject(pathTo('GameControls'), new Block.State(stateProps(pathTo('GameControls')).props))
     const StartGame2_action = React.useCallback(wrapFn(pathTo('StartGame2'), 'action', async () => {
         await StartNewGame()
@@ -193,7 +192,7 @@ function MainPage(props) {
     }), [])
     Elemento.elementoDebug(() => eval(Elemento.useDebugExpr()))
 
-    return React.createElement(Page, elProps(props.path).props,
+    return React.createElement(Page, elProps(props.path).styles(elProps(pathTo('MainPage.Styles')).gap('4px').props).props,
         React.createElement(Data, elProps(pathTo('Word')).display(false).props),
         React.createElement(Data, elProps(pathTo('Columns')).display(false).props),
         React.createElement(Data, elProps(pathTo('ColumnOffsets')).display(false).props),
@@ -252,7 +251,7 @@ Click Instructions for full details
 
 Or Start Game to dive straight in!`).props),
     ),
-        React.createElement(Block, elProps(pathTo('PlayPanel')).layout('vertical').show(Or(Status == 'Playing', Status == 'Ended')).styles(elProps(pathTo('PlayPanel.Styles')).width('100%').padding('0').props).props,
+        React.createElement(Block, elProps(pathTo('PlayPanel')).layout('vertical').show(Or(Status == 'Playing', Status == 'Ended')).styles(elProps(pathTo('PlayPanel.Styles')).width('100%').padding('0').position('relative').props).props,
             React.createElement(Block, elProps(pathTo('LetterGrid')).layout('vertical').props,
             React.createElement(ItemSet, elProps(pathTo('GridItems')).itemContentComponent(MainPage_GridItemsItem).props),
             React.createElement(Block, elProps(pathTo('UpRotators')).layout('horizontal').styles(elProps(pathTo('UpRotators.Styles')).gap('0').props).props,
@@ -263,10 +262,10 @@ Or Start Game to dive straight in!`).props),
             React.createElement(TextElement, elProps(pathTo('RoundWon')).show(IsRoundWon).content('Correct! ' + Points() + ' points added').props),
             React.createElement(TextElement, elProps(pathTo('RoundFailed')).show(IsRoundFailed).content('Sorry - no points').props),
             React.createElement(TextElement, elProps(pathTo('RoundSkipped')).show(RoundSkipped).content('Skipped').props),
-            React.createElement(Block, elProps(pathTo('EndedPanel')).layout('vertical').show(Status == 'Ended').props,
+            React.createElement(Block, elProps(pathTo('EndedPanel')).layout('vertical').show(Status == 'Ended').styles(elProps(pathTo('EndedPanel.Styles')).position('absolute').top('140').left('150').translate('-50% -50%').backgroundColor('lightblue').borderRadius('10').border('2px solid blue').minWidth('18em').padding('1em').props).props,
             React.createElement(TextElement, elProps(pathTo('Title')).styles(elProps(pathTo('Title.Styles')).fontFamily('Chelsea Market').fontSize('28').color('#039a03').props).content('Congratulations!').props),
             React.createElement(TextElement, elProps(pathTo('Score')).content('You have scored ' + Score + ' points!').props),
-            React.createElement(TextElement, elProps(pathTo('Whatnext')).content('Click Start Game to have another go').props),
+            React.createElement(TextElement, elProps(pathTo('Whatnext')).content('Click Start Game to play again').props),
     ),
             React.createElement(Block, elProps(pathTo('RoundControls')).layout('horizontal').props,
             React.createElement(Button, elProps(pathTo('GiveMeAClue')).content('Give Me A Clue').appearance('outline').show(Not(IsRoundComplete)).enabled(Len(FixedColumns) < Len(Word) - 2).action(GiveMeAClue_action).props),
@@ -278,13 +277,12 @@ Or Start Game to dive straight in!`).props),
             React.createElement(TextElement, elProps(pathTo('Title')).styles(elProps(pathTo('Title.Styles')).color('#7529df').fontFamily('Luckiest Guy').fontSize('28').props).content('Paused...').props),
             React.createElement(TextElement, elProps(pathTo('PauseText')).styles(elProps(pathTo('PauseText.Styles')).fontSize('20').props).content('Click Continue Game to carry on').props),
     ),
-        React.createElement(Block, elProps(pathTo('Spacer')).layout('vertical').styles(elProps(pathTo('Spacer.Styles')).borderBottom('2px solid lightgray').width('100%').props).props),
-        React.createElement(Block, elProps(pathTo('GameControls')).layout('horizontal').styles(elProps(pathTo('GameControls.Styles')).paddingTop('20px').props).props,
+        React.createElement(Block, elProps(pathTo('GameControls')).layout('horizontal').styles(elProps(pathTo('GameControls.Styles')).paddingTop('20px').marginTop('4px').props).props,
             React.createElement(Button, elProps(pathTo('StartGame')).content('Start Game').appearance('filled').show(Not(GameRunning)).action(StartGame_action).props),
-            React.createElement(Button, elProps(pathTo('StopGame')).content('Stop Game').appearance('outline').show(GameRunning).action(StopGame_action).props),
-            React.createElement(Button, elProps(pathTo('PauseGame')).content('Pause Game').appearance('outline').show(Status == 'Playing').action(PauseGame_action).props),
-            React.createElement(Button, elProps(pathTo('ContinueGame')).content('Continue Game').appearance('outline').show(Status == 'Paused').action(ContinueGame_action).props),
-            React.createElement(Button, elProps(pathTo('Instructions')).content('Instructions').appearance('outline').action(Instructions_action).props),
+            React.createElement(Button, elProps(pathTo('StopGame')).content('Stop').appearance('outline').show(GameRunning).action(StopGame_action).props),
+            React.createElement(Button, elProps(pathTo('PauseGame')).content('Pause').appearance('outline').show(Status == 'Playing').action(PauseGame_action).props),
+            React.createElement(Button, elProps(pathTo('ContinueGame')).content('Resume').appearance('outline').show(Status == 'Paused').action(ContinueGame_action).props),
+            React.createElement(Button, elProps(pathTo('Instructions')).content('Help').appearance('outline').action(Instructions_action).props),
     ),
     )
 }
