@@ -372,7 +372,7 @@
               "properties": {
                 "action": true,
                 "calculation": {
-                  "expr": "Set(Status, 'Ended')\nEndRound()"
+                  "expr": "Set(Status, 'Ended')\nEndRound()\nSendMessage('parent', Record('score', Score))"
                 }
               },
               "kind": "Function"

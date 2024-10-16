@@ -48,9 +48,11 @@ const MainPage_ItemSet2Item = React.memo(function MainPage_ItemSet2Item(props) {
 function MainPage(props) {
     const pathTo = name => props.path + '.' + name
     const {Page, Data, Calculation, Timer, TextElement, Dialog, Button, Block, ItemSet} = Elemento.components
-    const {Range, Len, Split, Select, And, ItemAt, ForEach, Not, Eq, Join, First, Or, If, WithoutItems, RandomFrom, FlatList, Shuffle, RandomListFrom, ListContains, Random, Ceiling} = Elemento.globalFunctions
+    const {Range, Len, Split, Select, And, ItemAt, ForEach, Not, Eq, Join, First, Or, If, WithoutItems, RandomFrom, FlatList, Shuffle, RandomListFrom, ListContains, Random, Record, Ceiling} = Elemento.globalFunctions
     const {Update, Set, Reset} = Elemento.appFunctions
     const _state = Elemento.useGetStore()
+    const app = _state.useObject('HiddenWords')
+    const {SendMessage} = app
     const Word = _state.setObject(pathTo('Word'), new Data.State(stateProps(pathTo('Word')).props))
     const Columns = _state.setObject(pathTo('Columns'), new Data.State(stateProps(pathTo('Columns')).value([]).props))
     const ColumnOffsets = _state.setObject(pathTo('ColumnOffsets'), new Data.State(stateProps(pathTo('ColumnOffsets')).value([]).props))
@@ -129,8 +131,9 @@ function MainPage(props) {
     const WhenRoundComplete = _state.setObject(pathTo('WhenRoundComplete'), new Calculation.State(stateProps(pathTo('WhenRoundComplete')).value(IsRoundComplete).whenTrueAction(WhenRoundComplete_whenTrueAction).props))
     const EndGame = _state.setObject(pathTo('EndGame'), React.useCallback(wrapFn(pathTo('EndGame'), 'calculation', () => {
         Set(Status, 'Ended')
-        return EndRound()
-    }), [Status, EndRound]))
+        EndRound()
+        return SendMessage('parent', Record('score', Score))
+    }), [Status, EndRound, Score]))
     const GameTimer_endAction = React.useCallback(wrapFn(pathTo('GameTimer'), 'endAction', async ($timer) => {
         await EndGame()
     }), [EndGame])
