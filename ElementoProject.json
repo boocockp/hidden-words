@@ -372,7 +372,7 @@
               "properties": {
                 "action": true,
                 "calculation": {
-                  "expr": "Set(Status, 'Ended')\nEndRound()\nSendMessage('parent', Record('score', Score))"
+                  "expr": "Set(Status, 'Ended')\nEndRound()\nSendScore(Score)"
                 }
               },
               "kind": "Function"
@@ -395,6 +395,18 @@
                 "action": true,
                 "calculation": {
                   "expr": "Set(Status, 'Playing')\nGameTimer.Start()"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_20",
+              "name": "Send Score",
+              "properties": {
+                "input1": "score",
+                "action": true,
+                "calculation": {
+                  "expr": "SendMessage('parent', Record('score', score, 'url', CurrentUrl().text))"
                 }
               },
               "kind": "Function"

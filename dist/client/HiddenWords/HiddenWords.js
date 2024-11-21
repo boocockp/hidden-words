@@ -52,7 +52,7 @@ function MainPage(props) {
     const {Update, Set, Reset} = Elemento.appFunctions
     const _state = Elemento.useGetStore()
     const app = _state.useObject('HiddenWords')
-    const {SendMessage} = app
+    const {SendMessage, CurrentUrl} = app
     const Word = _state.setObject(pathTo('Word'), new Data.State(stateProps(pathTo('Word')).props))
     const Columns = _state.setObject(pathTo('Columns'), new Data.State(stateProps(pathTo('Columns')).value([]).props))
     const ColumnOffsets = _state.setObject(pathTo('ColumnOffsets'), new Data.State(stateProps(pathTo('ColumnOffsets')).value([]).props))
@@ -129,11 +129,14 @@ function MainPage(props) {
         await EndRound()
     }), [EndRound])
     const WhenRoundComplete = _state.setObject(pathTo('WhenRoundComplete'), new Calculation.State(stateProps(pathTo('WhenRoundComplete')).value(IsRoundComplete).whenTrueAction(WhenRoundComplete_whenTrueAction).props))
+    const SendScore = _state.setObject(pathTo('SendScore'), React.useCallback(wrapFn(pathTo('SendScore'), 'calculation', (score) => {
+        return SendMessage('parent', Record('score', score, 'url', CurrentUrl().text))
+    }), []))
     const EndGame = _state.setObject(pathTo('EndGame'), React.useCallback(wrapFn(pathTo('EndGame'), 'calculation', () => {
         Set(Status, 'Ended')
         EndRound()
-        return SendMessage('parent', Record('score', Score))
-    }), [Status, EndRound, Score]))
+        return SendScore(Score)
+    }), [Status, EndRound, SendScore, Score]))
     const GameTimer_endAction = React.useCallback(wrapFn(pathTo('GameTimer'), 'endAction', async ($timer) => {
         await EndGame()
     }), [EndGame])
