@@ -245,10 +245,23 @@
               "kind": "Calculation"
             },
             {
+              "id": "calculation_29",
+              "name": "When Game Ending",
+              "properties": {
+                "calculation": {
+                  "expr": "Status == 'Ending'"
+                },
+                "whenTrueAction": {
+                  "expr": "WrapGame()"
+                }
+              },
+              "kind": "Calculation"
+            },
+            {
               "id": "timer_1",
               "name": "Game Timer",
               "properties": {
-                "period": 180,
+                "period": 30,
                 "interval": 1,
                 "show": false,
                 "endAction": {
@@ -361,7 +374,7 @@
               "properties": {
                 "action": true,
                 "calculation": {
-                  "expr": "If(IsRoundWon, Set(Score, Score + Points(false)))\nSet(ColumnOffsets, ForEach(Columns, 0))"
+                  "expr": "If(IsRoundWon, Set(Score, Score + Points()))\nSet(ColumnOffsets, ForEach(Columns, 0))"
                 }
               },
               "kind": "Function"
@@ -372,7 +385,18 @@
               "properties": {
                 "action": true,
                 "calculation": {
-                  "expr": "Set(Status, 'Ended')\nEndRound()\nSendScore(Score)"
+                  "expr": "Set(Status, 'Ending')"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_21",
+              "name": "Wrap Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "SendScore(Score)\nSet(Status, 'Ended')"
                 }
               },
               "kind": "Function"
@@ -406,7 +430,7 @@
                 "input1": "score",
                 "action": true,
                 "calculation": {
-                  "expr": "SendMessage('parent', Record('score', score, 'url', CurrentUrl().text))"
+                  "expr": "Log('Sending score', score)\nSendMessage('parent', Record('score', score, 'url', CurrentUrl().text))"
                 }
               },
               "kind": "Function"
@@ -922,7 +946,7 @@
                   "name": "Stop Game",
                   "properties": {
                     "action": {
-                      "expr": "EndGame()"
+                      "expr": "GameTimer.Stop()\nEndGame()"
                     },
                     "show": {
                       "expr": "GameRunning"
