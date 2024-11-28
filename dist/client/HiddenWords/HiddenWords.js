@@ -48,23 +48,59 @@ const MainPage_ItemSet2Item = React.memo(function MainPage_ItemSet2Item(props) {
 function MainPage(props) {
     const pathTo = name => props.path + '.' + name
     const {Page, Data, Calculation, Timer, TextElement, Dialog, Button, Block, ItemSet} = Elemento.components
-    const {Range, Len, Split, Select, And, ItemAt, ForEach, Not, Eq, Join, First, Or, If, WithoutItems, RandomFrom, FlatList, Shuffle, RandomListFrom, ListContains, Random, Log, Record, Ceiling} = Elemento.globalFunctions
-    const {Update, Set, Reset} = Elemento.appFunctions
+    const {And, Not, Or, If, Log, Record, Range, Len, Split, Select, RandomFrom, ForEach, Random, ItemAt, Eq, Join, First, WithoutItems, FlatList, Shuffle, RandomListFrom, ListContains, Ceiling} = Elemento.globalFunctions
+    const {Reset, Set, Update} = Elemento.appFunctions
     const _state = Elemento.useGetStore()
     const app = _state.useObject('HiddenWords')
     const {SendMessage, CurrentUrl} = app
+    const Status = _state.setObject(pathTo('Status'), new Data.State(stateProps(pathTo('Status')).value('Ready').props))
+    const Score = _state.setObject(pathTo('Score'), new Data.State(stateProps(pathTo('Score')).value(0).props))
+    const RoundSkipped = _state.setObject(pathTo('RoundSkipped'), new Data.State(stateProps(pathTo('RoundSkipped')).value(false).props))
+    const IsRoundFailed = _state.setObject(pathTo('IsRoundFailed'), new Calculation.State(stateProps(pathTo('IsRoundFailed')).value(false).props))
+    const GameRunning = _state.setObject(pathTo('GameRunning'), new Calculation.State(stateProps(pathTo('GameRunning')).value(Or(Status == 'Playing', Status == 'Paused')).props))
+    const EndGame = _state.setObject(pathTo('EndGame'), React.useCallback(wrapFn(pathTo('EndGame'), 'calculation', () => {
+        Set(Status, 'Ending')
+    }), [Status]))
+    const GameTimer_endAction = React.useCallback(wrapFn(pathTo('GameTimer'), 'endAction', async ($timer) => {
+        await EndGame()
+    }), [EndGame])
+    const GameTimer = _state.setObject(pathTo('GameTimer'), new Timer.State(stateProps(pathTo('GameTimer')).period(180).interval(1).endAction(GameTimer_endAction).props))
+    const PauseGame = _state.setObject(pathTo('PauseGame'), React.useCallback(wrapFn(pathTo('PauseGame'), 'calculation', async () => {
+        Set(Status, 'Paused')
+        await GameTimer.Stop()
+    }), [Status, GameTimer]))
+    const ContinueGame = _state.setObject(pathTo('ContinueGame'), React.useCallback(wrapFn(pathTo('ContinueGame'), 'calculation', async () => {
+        Set(Status, 'Playing')
+        await GameTimer.Start()
+    }), [Status, GameTimer]))
+    const StopGame = _state.setObject(pathTo('StopGame'), React.useCallback(wrapFn(pathTo('StopGame'), 'calculation', async () => {
+        await GameTimer.Stop()
+        await EndGame()
+    }), [GameTimer, EndGame]))
+    const SendScore = _state.setObject(pathTo('SendScore'), React.useCallback(wrapFn(pathTo('SendScore'), 'calculation', async (score) => {
+        Log('Sending score', score)
+        await SendMessage('parent', Record('score', score, 'url', (await CurrentUrl()).text))
+    }), []))
+    const WrapGame = _state.setObject(pathTo('WrapGame'), React.useCallback(wrapFn(pathTo('WrapGame'), 'calculation', async () => {
+        await SendScore(Score)
+        Set(Status, 'Ended')
+    }), [SendScore, Score, Status]))
+    const WhenGameEnding_whenTrueAction = React.useCallback(wrapFn(pathTo('WhenGameEnding'), 'whenTrueAction', async () => {
+        await WrapGame()
+    }), [WrapGame])
+    const WhenGameEnding = _state.setObject(pathTo('WhenGameEnding'), new Calculation.State(stateProps(pathTo('WhenGameEnding')).value(Status == 'Ending').whenTrueAction(WhenGameEnding_whenTrueAction).props))
     const Word = _state.setObject(pathTo('Word'), new Data.State(stateProps(pathTo('Word')).props))
     const Columns = _state.setObject(pathTo('Columns'), new Data.State(stateProps(pathTo('Columns')).value([]).props))
     const ColumnOffsets = _state.setObject(pathTo('ColumnOffsets'), new Data.State(stateProps(pathTo('ColumnOffsets')).value([]).props))
     const FixedColumns = _state.setObject(pathTo('FixedColumns'), new Data.State(stateProps(pathTo('FixedColumns')).value([]).props))
-    const Status = _state.setObject(pathTo('Status'), new Data.State(stateProps(pathTo('Status')).value('Ready').props))
-    const Score = _state.setObject(pathTo('Score'), new Data.State(stateProps(pathTo('Score')).value(0).props))
-    const RoundSkipped = _state.setObject(pathTo('RoundSkipped'), new Data.State(stateProps(pathTo('RoundSkipped')).value(false).props))
     const ColumnIndexes = _state.setObject(pathTo('ColumnIndexes'), new Calculation.State(stateProps(pathTo('ColumnIndexes')).value(Range(0, Len(Word) -1)).props))
     const AllLetters = _state.setObject(pathTo('AllLetters'), new Calculation.State(stateProps(pathTo('AllLetters')).value(Split('abcdefghijklmnopqrstuvwxyz')).props))
     const CandidateWords = _state.setObject(pathTo('CandidateWords'), new Calculation.State(stateProps(pathTo('CandidateWords')).value(Select(WordList(), ($item, $index) => And(Len($item) >= 5, Len($item) <= 7))).props))
     const Letters = _state.setObject(pathTo('Letters'), new Calculation.State(stateProps(pathTo('Letters')).value(Split(Word)).props))
     const NumRows = _state.setObject(pathTo('NumRows'), new Calculation.State(stateProps(pathTo('NumRows')).value(4).props))
+    const FinishRound = _state.setObject(pathTo('FinishRound'), React.useCallback(wrapFn(pathTo('FinishRound'), 'calculation', () => {
+        Set(ColumnOffsets, ForEach(Columns, ($item, $index) => 0))
+    }), [ColumnOffsets, Columns]))
     const ColumnLetter = _state.setObject(pathTo('ColumnLetter'), React.useCallback(wrapFn(pathTo('ColumnLetter'), 'calculation', (rowIndex, colIndex) => {
         let column = ItemAt(Columns, colIndex)
         let rowOffset = ItemAt(ColumnOffsets, colIndex)
@@ -75,15 +111,24 @@ function MainPage(props) {
         return ForEach(Columns, ($item, $index) => ColumnLetter(rowIndex, $index))
     }), [Columns, ColumnLetter]))
     const LetterRows = _state.setObject(pathTo('LetterRows'), new Calculation.State(stateProps(pathTo('LetterRows')).value(ForEach(Range(0, NumRows - 1), ($item, $index) => LetterRow($item))).props))
-    const IsRoundFailed = _state.setObject(pathTo('IsRoundFailed'), new Calculation.State(stateProps(pathTo('IsRoundFailed')).value(false).props))
-    const GameRunning = _state.setObject(pathTo('GameRunning'), new Calculation.State(stateProps(pathTo('GameRunning')).value(Or(Status == 'Playing', Status == 'Paused')).props))
-    const IsRoundWon = _state.setObject(pathTo('IsRoundWon'), new Calculation.State(stateProps(pathTo('IsRoundWon')).value(And(GameRunning, Not(RoundSkipped), Eq(Join(First(LetterRows)), Word))).props))
-    const IsRoundComplete = _state.setObject(pathTo('IsRoundComplete'), new Calculation.State(stateProps(pathTo('IsRoundComplete')).value(Or(IsRoundWon, IsRoundFailed, RoundSkipped, Not(GameRunning))).props))
-    const RoundInPlay = _state.setObject(pathTo('RoundInPlay'), new Calculation.State(stateProps(pathTo('RoundInPlay')).value(Not(IsRoundComplete)).props))
     const Points = _state.setObject(pathTo('Points'), React.useCallback(wrapFn(pathTo('Points'), 'calculation', () => {
         let lettersGuessed = Len(Word) - Len(FixedColumns)
         return lettersGuessed * 3
     }), [Word, FixedColumns]))
+    const RoundCorrect = _state.setObject(pathTo('RoundCorrect'), React.useCallback(wrapFn(pathTo('RoundCorrect'), 'calculation', () => {
+        return Eq(Join(First(LetterRows)), Word)
+    }), [LetterRows, Word]))
+    const IsRoundWon = _state.setObject(pathTo('IsRoundWon'), new Calculation.State(stateProps(pathTo('IsRoundWon')).value(And(GameRunning, Not(RoundSkipped), RoundCorrect())).props))
+    const IsRoundComplete = _state.setObject(pathTo('IsRoundComplete'), new Calculation.State(stateProps(pathTo('IsRoundComplete')).value(Or(IsRoundWon, IsRoundFailed, RoundSkipped, Not(GameRunning))).props))
+    const RoundInPlay = _state.setObject(pathTo('RoundInPlay'), new Calculation.State(stateProps(pathTo('RoundInPlay')).value(Not(IsRoundComplete)).props))
+    const EndRound = _state.setObject(pathTo('EndRound'), React.useCallback(wrapFn(pathTo('EndRound'), 'calculation', async () => {
+        await If(IsRoundWon, () => Set(Score, Score + Points()))
+        await FinishRound()
+    }), [IsRoundWon, Score, Points, FinishRound]))
+    const WhenRoundComplete_whenTrueAction = React.useCallback(wrapFn(pathTo('WhenRoundComplete'), 'whenTrueAction', async () => {
+        await EndRound()
+    }), [EndRound])
+    const WhenRoundComplete = _state.setObject(pathTo('WhenRoundComplete'), new Calculation.State(stateProps(pathTo('WhenRoundComplete')).value(IsRoundComplete).whenTrueAction(WhenRoundComplete_whenTrueAction).props))
     const RotateUp = _state.setObject(pathTo('RotateUp'), React.useCallback(wrapFn(pathTo('RotateUp'), 'calculation', (column) => {
         let offset = ItemAt(ColumnOffsets, column)
         let newOffset = (offset + 1) % NumRows
@@ -103,10 +148,6 @@ function MainPage(props) {
     const ColumnLetters = _state.setObject(pathTo('ColumnLetters'), React.useCallback(wrapFn(pathTo('ColumnLetters'), 'calculation', (correctLetter) => {
         return FlatList(correctLetter, Shuffle(RandomListFrom(WithoutItems(AllLetters, correctLetter), NumRows - 1)))
     }), [AllLetters, NumRows]))
-    const RowHtml = _state.setObject(pathTo('RowHtml'), React.useCallback(wrapFn(pathTo('RowHtml'), 'calculation', (letters, useHtml) => {
-        let letterItems = ForEach(letters, ($item, $index) => If(useHtml && ListContains(FixedColumns, $index), () => `<span style='color: green'>${$item}</span>`, $item))
-        return Join(letterItems)
-    }), [FixedColumns]))
     const SetupNewRound = _state.setObject(pathTo('SetupNewRound'), React.useCallback(wrapFn(pathTo('SetupNewRound'), 'calculation', () => {
         let word = RandomFrom(CandidateWords)
         let letters = Split(word)
@@ -121,21 +162,6 @@ function MainPage(props) {
         Reset(RoundSkipped)
         await SetupNewRound()
     }), [RoundSkipped, SetupNewRound]))
-    const EndRound = _state.setObject(pathTo('EndRound'), React.useCallback(wrapFn(pathTo('EndRound'), 'calculation', async () => {
-        await If(IsRoundWon, () => Set(Score, Score + Points()))
-        Set(ColumnOffsets, ForEach(Columns, ($item, $index) => 0))
-    }), [IsRoundWon, Score, Points, ColumnOffsets, Columns]))
-    const WhenRoundComplete_whenTrueAction = React.useCallback(wrapFn(pathTo('WhenRoundComplete'), 'whenTrueAction', async () => {
-        await EndRound()
-    }), [EndRound])
-    const WhenRoundComplete = _state.setObject(pathTo('WhenRoundComplete'), new Calculation.State(stateProps(pathTo('WhenRoundComplete')).value(IsRoundComplete).whenTrueAction(WhenRoundComplete_whenTrueAction).props))
-    const EndGame = _state.setObject(pathTo('EndGame'), React.useCallback(wrapFn(pathTo('EndGame'), 'calculation', () => {
-        Set(Status, 'Ending')
-    }), [Status]))
-    const GameTimer_endAction = React.useCallback(wrapFn(pathTo('GameTimer'), 'endAction', async ($timer) => {
-        await EndGame()
-    }), [EndGame])
-    const GameTimer = _state.setObject(pathTo('GameTimer'), new Timer.State(stateProps(pathTo('GameTimer')).period(30).interval(1).endAction(GameTimer_endAction).props))
     const StartNewGame = _state.setObject(pathTo('StartNewGame'), React.useCallback(wrapFn(pathTo('StartNewGame'), 'calculation', async () => {
         Reset(Score)
         Reset(GameTimer)
@@ -143,26 +169,10 @@ function MainPage(props) {
         await StartNewRound()
         await GameTimer.Start()
     }), [Score, GameTimer, Status, StartNewRound]))
-    const PauseGame = _state.setObject(pathTo('PauseGame'), React.useCallback(wrapFn(pathTo('PauseGame'), 'calculation', async () => {
-        Set(Status, 'Paused')
-        await GameTimer.Stop()
-    }), [Status, GameTimer]))
-    const ContinueGame = _state.setObject(pathTo('ContinueGame'), React.useCallback(wrapFn(pathTo('ContinueGame'), 'calculation', async () => {
-        Set(Status, 'Playing')
-        await GameTimer.Start()
-    }), [Status, GameTimer]))
-    const SendScore = _state.setObject(pathTo('SendScore'), React.useCallback(wrapFn(pathTo('SendScore'), 'calculation', async (score) => {
-        Log('Sending score', score)
-        await SendMessage('parent', Record('score', score, 'url', (await CurrentUrl()).text))
-    }), []))
-    const WrapGame = _state.setObject(pathTo('WrapGame'), React.useCallback(wrapFn(pathTo('WrapGame'), 'calculation', async () => {
-        await SendScore(Score)
-        Set(Status, 'Ended')
-    }), [SendScore, Score, Status]))
-    const WhenGameEnding_whenTrueAction = React.useCallback(wrapFn(pathTo('WhenGameEnding'), 'whenTrueAction', async () => {
-        await WrapGame()
-    }), [WrapGame])
-    const WhenGameEnding = _state.setObject(pathTo('WhenGameEnding'), new Calculation.State(stateProps(pathTo('WhenGameEnding')).value(Status == 'Ending').whenTrueAction(WhenGameEnding_whenTrueAction).props))
+    const RowHtml = _state.setObject(pathTo('RowHtml'), React.useCallback(wrapFn(pathTo('RowHtml'), 'calculation', (letters, useHtml) => {
+        let letterItems = ForEach(letters, ($item, $index) => If(useHtml && ListContains(FixedColumns, $index), () => `<span style='color: green'>${$item}</span>`, $item))
+        return Join(letterItems)
+    }), [FixedColumns]))
     const Instructions = _state.setObject(pathTo('Instructions'), new Dialog.State(stateProps(pathTo('Instructions')).initiallyOpen(false).props))
     const StatsLayout = _state.setObject(pathTo('StatsLayout'), new Block.State(stateProps(pathTo('StatsLayout')).props))
     const ReadyPanel = _state.setObject(pathTo('ReadyPanel'), new Block.State(stateProps(pathTo('ReadyPanel')).props))
@@ -192,9 +202,8 @@ function MainPage(props) {
         await StartNewGame()
     }), [StartNewGame])
     const StopGame_action = React.useCallback(wrapFn(pathTo('StopGame'), 'action', async () => {
-        await GameTimer.Stop()
-        await EndGame()
-    }), [GameTimer, EndGame])
+        await StopGame()
+    }), [])
     const PauseGame_action = React.useCallback(wrapFn(pathTo('PauseGame'), 'action', async () => {
         await PauseGame()
     }), [])
@@ -207,19 +216,9 @@ function MainPage(props) {
     Elemento.elementoDebug(() => eval(Elemento.useDebugExpr()))
 
     return React.createElement(Page, elProps(props.path).styles(elProps(pathTo('MainPage.Styles')).gap('4px').props).props,
-        React.createElement(Data, elProps(pathTo('Word')).display(false).props),
-        React.createElement(Data, elProps(pathTo('Columns')).display(false).props),
-        React.createElement(Data, elProps(pathTo('ColumnOffsets')).display(false).props),
-        React.createElement(Data, elProps(pathTo('FixedColumns')).display(false).props),
         React.createElement(Data, elProps(pathTo('Status')).display(false).props),
         React.createElement(Data, elProps(pathTo('Score')).display(false).props),
         React.createElement(Data, elProps(pathTo('RoundSkipped')).display(false).props),
-        React.createElement(Calculation, elProps(pathTo('ColumnIndexes')).show(false).props),
-        React.createElement(Calculation, elProps(pathTo('AllLetters')).show(false).props),
-        React.createElement(Calculation, elProps(pathTo('CandidateWords')).show(false).props),
-        React.createElement(Calculation, elProps(pathTo('Letters')).show(false).props),
-        React.createElement(Calculation, elProps(pathTo('NumRows')).show(false).props),
-        React.createElement(Calculation, elProps(pathTo('LetterRows')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('IsRoundWon')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('IsRoundFailed')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('WhenRoundComplete')).show(false).props),
@@ -228,6 +227,16 @@ function MainPage(props) {
         React.createElement(Calculation, elProps(pathTo('GameRunning')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('WhenGameEnding')).props),
         React.createElement(Timer, elProps(pathTo('GameTimer')).show(false).props),
+        React.createElement(Data, elProps(pathTo('Word')).display(false).props),
+        React.createElement(Data, elProps(pathTo('Columns')).display(false).props),
+        React.createElement(Data, elProps(pathTo('ColumnOffsets')).display(false).props),
+        React.createElement(Data, elProps(pathTo('FixedColumns')).display(false).props),
+        React.createElement(Calculation, elProps(pathTo('ColumnIndexes')).show(false).props),
+        React.createElement(Calculation, elProps(pathTo('AllLetters')).show(false).props),
+        React.createElement(Calculation, elProps(pathTo('CandidateWords')).show(false).props),
+        React.createElement(Calculation, elProps(pathTo('Letters')).show(false).props),
+        React.createElement(Calculation, elProps(pathTo('NumRows')).show(false).props),
+        React.createElement(Calculation, elProps(pathTo('LetterRows')).show(false).props),
         React.createElement(TextElement, elProps(pathTo('Title')).styles(elProps(pathTo('Title.Styles')).fontFamily('Chelsea Market').fontSize('28').color('#039a03').props).content('Hidden Words').props),
         React.createElement(Dialog, elProps(pathTo('Instructions')).layout('vertical').showCloseButton(true).styles(elProps(pathTo('Instructions.Styles')).padding('2em').props).props,
             React.createElement(TextElement, elProps(pathTo('InstructionsText')).allowHtml(true).content(`You have to find a word hidden in a grid of letters.

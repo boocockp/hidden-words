@@ -21,42 +21,6 @@
           },
           "elements": [
             {
-              "id": "data_3",
-              "name": "Word",
-              "properties": {},
-              "kind": "Data"
-            },
-            {
-              "id": "data_8",
-              "name": "Columns",
-              "properties": {
-                "initialValue": {
-                  "expr": "[]"
-                }
-              },
-              "kind": "Data"
-            },
-            {
-              "id": "data_9",
-              "name": "Column Offsets",
-              "properties": {
-                "initialValue": {
-                  "expr": "[]"
-                }
-              },
-              "kind": "Data"
-            },
-            {
-              "id": "data_10",
-              "name": "Fixed Columns",
-              "properties": {
-                "initialValue": {
-                  "expr": "[]"
-                }
-              },
-              "kind": "Data"
-            },
-            {
               "id": "data_1",
               "name": "Status",
               "properties": {
@@ -87,100 +51,11 @@
               "kind": "Data"
             },
             {
-              "id": "calculation_28",
-              "name": "Column Indexes",
-              "properties": {
-                "calculation": {
-                  "expr": "Range(0, Len(Word) -1)"
-                },
-                "show": false
-              },
-              "kind": "Calculation"
-            },
-            {
-              "id": "calculation_25",
-              "name": "All Letters",
-              "properties": {
-                "calculation": {
-                  "expr": "Split('abcdefghijklmnopqrstuvwxyz')"
-                },
-                "show": false
-              },
-              "kind": "Calculation"
-            },
-            {
-              "id": "calculation_26",
-              "name": "Candidate Words",
-              "properties": {
-                "calculation": {
-                  "expr": "Select(WordList(), And(Len($item) >= 5, Len($item) <= 7))"
-                },
-                "show": false
-              },
-              "kind": "Calculation"
-            },
-            {
-              "id": "calculation_15",
-              "name": "Letters",
-              "properties": {
-                "calculation": {
-                  "expr": "Split(Word)"
-                },
-                "show": false
-              },
-              "kind": "Calculation"
-            },
-            {
-              "id": "calculation_24",
-              "name": "Num Rows",
-              "properties": {
-                "calculation": {
-                  "expr": "4"
-                },
-                "show": false
-              },
-              "kind": "Calculation"
-            },
-            {
-              "id": "function_18",
-              "name": "Column Letter",
-              "properties": {
-                "input1": "rowIndex",
-                "calculation": {
-                  "expr": "let column = ItemAt(Columns, colIndex)\nlet rowOffset = ItemAt(ColumnOffsets, colIndex)\nlet row = (rowIndex + rowOffset) % NumRows\nItemAt(column, row)"
-                },
-                "input2": "colIndex"
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_14",
-              "name": "Letter Row",
-              "properties": {
-                "input1": "rowIndex",
-                "calculation": {
-                  "expr": "ForEach(Columns, ColumnLetter(rowIndex, $index))"
-                }
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "calculation_27",
-              "name": "Letter Rows",
-              "properties": {
-                "calculation": {
-                  "expr": "ForEach(Range(0, NumRows - 1), LetterRow($item))"
-                },
-                "show": false
-              },
-              "kind": "Calculation"
-            },
-            {
               "id": "calculation_14",
               "name": "Is Round Won",
               "properties": {
                 "calculation": {
-                  "expr": "And(GameRunning, Not(RoundSkipped), Eq(Join(First(LetterRows)), Word))"
+                  "expr": "And(GameRunning, Not(RoundSkipped), RoundCorrect())"
                 },
                 "show": false
               },
@@ -261,7 +136,7 @@
               "id": "timer_1",
               "name": "Game Timer",
               "properties": {
-                "period": 30,
+                "period": 180,
                 "interval": 1,
                 "show": false,
                 "endAction": {
@@ -271,11 +146,270 @@
               "kind": "Timer"
             },
             {
+              "id": "function_6",
+              "name": "Start New Game",
+              "properties": {
+                "calculation": {
+                  "expr": "Reset(Score)\nReset(GameTimer)\nSet(Status, 'Playing')\nStartNewRound()\nGameTimer.Start()"
+                },
+                "action": true
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_7",
+              "name": "Start New Round",
+              "properties": {
+                "calculation": {
+                  "expr": "Reset(RoundSkipped)\nSetupNewRound()"
+                },
+                "action": true
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_8",
+              "name": "End Round",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "If(IsRoundWon, Set(Score, Score + Points()))\nFinishRound()"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_10",
+              "name": "Pause Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "Set(Status, 'Paused')\nGameTimer.Stop()"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_11",
+              "name": "Continue Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "Set(Status, 'Playing')\nGameTimer.Start()"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_24",
+              "name": "Stop Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "GameTimer.Stop()\nEndGame()"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_9",
+              "name": "End Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "Set(Status, 'Ending')"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_21",
+              "name": "Wrap Game",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "SendScore(Score)\nSet(Status, 'Ended')"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_20",
+              "name": "Send Score",
+              "properties": {
+                "input1": "score",
+                "action": true,
+                "calculation": {
+                  "expr": "Log('Sending score', score)\nSendMessage('parent', Record('score', score, 'url', CurrentUrl().text))"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "data_3",
+              "name": "Word",
+              "properties": {},
+              "kind": "Data"
+            },
+            {
+              "id": "data_8",
+              "name": "Columns",
+              "properties": {
+                "initialValue": {
+                  "expr": "[]"
+                }
+              },
+              "kind": "Data"
+            },
+            {
+              "id": "data_9",
+              "name": "Column Offsets",
+              "properties": {
+                "initialValue": {
+                  "expr": "[]"
+                }
+              },
+              "kind": "Data"
+            },
+            {
+              "id": "data_10",
+              "name": "Fixed Columns",
+              "properties": {
+                "initialValue": {
+                  "expr": "[]"
+                }
+              },
+              "kind": "Data"
+            },
+            {
+              "id": "calculation_28",
+              "name": "Column Indexes",
+              "properties": {
+                "calculation": {
+                  "expr": "Range(0, Len(Word) -1)"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_25",
+              "name": "All Letters",
+              "properties": {
+                "calculation": {
+                  "expr": "Split('abcdefghijklmnopqrstuvwxyz')"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_26",
+              "name": "Candidate Words",
+              "properties": {
+                "calculation": {
+                  "expr": "Select(WordList(), And(Len($item) >= 5, Len($item) <= 7))"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_15",
+              "name": "Letters",
+              "properties": {
+                "calculation": {
+                  "expr": "Split(Word)"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "calculation_24",
+              "name": "Num Rows",
+              "properties": {
+                "calculation": {
+                  "expr": "4"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
+              "id": "function_12",
+              "name": "Setup New Round",
+              "notes": "Specific setup for game, called by Start New Round",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "let word = RandomFrom(CandidateWords)\nlet letters = Split(word)\nlet cols = ForEach(letters, ColumnLetters($item))\nlet firstOffset = 0\nSet(Word, word)\nSet(Columns, cols)\nSet(ColumnOffsets, ForEach(letters, Random(NumRows)))\nReset(FixedColumns)\n"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_23",
+              "name": "Finish Round",
+              "notes": "Specific for game, called by End Round",
+              "properties": {
+                "action": true,
+                "calculation": {
+                  "expr": "Set(ColumnOffsets, ForEach(Columns, 0))"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_18",
+              "name": "Column Letter",
+              "properties": {
+                "input1": "rowIndex",
+                "calculation": {
+                  "expr": "let column = ItemAt(Columns, colIndex)\nlet rowOffset = ItemAt(ColumnOffsets, colIndex)\nlet row = (rowIndex + rowOffset) % NumRows\nItemAt(column, row)"
+                },
+                "input2": "colIndex"
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_14",
+              "name": "Letter Row",
+              "properties": {
+                "input1": "rowIndex",
+                "calculation": {
+                  "expr": "ForEach(Columns, ColumnLetter(rowIndex, $index))"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "calculation_27",
+              "name": "Letter Rows",
+              "properties": {
+                "calculation": {
+                  "expr": "ForEach(Range(0, NumRows - 1), LetterRow($item))"
+                },
+                "show": false
+              },
+              "kind": "Calculation"
+            },
+            {
               "id": "function_5",
               "name": "Points",
               "properties": {
                 "calculation": {
                   "expr": "let lettersGuessed = Len(Word) - Len(FixedColumns)\nlettersGuessed * 3\n"
+                }
+              },
+              "kind": "Function"
+            },
+            {
+              "id": "function_22",
+              "name": "Round Correct",
+              "properties": {
+                "calculation": {
+                  "expr": "Eq(Join(First(LetterRows)), Word)"
                 }
               },
               "kind": "Function"
@@ -332,106 +466,6 @@
                   "expr": "let letterItems = ForEach(letters, If(useHtml && ListContains(FixedColumns, $index), `<span style='color: green'>${$item}</span>`, $item))\nJoin(letterItems)"
                 },
                 "input2": "useHtml"
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_12",
-              "name": "Setup New Round",
-              "properties": {
-                "action": true,
-                "calculation": {
-                  "expr": "let word = RandomFrom(CandidateWords)\nlet letters = Split(word)\nlet cols = ForEach(letters, ColumnLetters($item))\nlet firstOffset = 0\nSet(Word, word)\nSet(Columns, cols)\nSet(ColumnOffsets, ForEach(letters, Random(NumRows)))\nReset(FixedColumns)\n"
-                }
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_6",
-              "name": "Start New Game",
-              "properties": {
-                "calculation": {
-                  "expr": "Reset(Score)\nReset(GameTimer)\nSet(Status, 'Playing')\nStartNewRound()\nGameTimer.Start()"
-                },
-                "action": true
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_7",
-              "name": "Start New Round",
-              "properties": {
-                "calculation": {
-                  "expr": "Reset(RoundSkipped)\nSetupNewRound()"
-                },
-                "action": true
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_8",
-              "name": "End Round",
-              "properties": {
-                "action": true,
-                "calculation": {
-                  "expr": "If(IsRoundWon, Set(Score, Score + Points()))\nSet(ColumnOffsets, ForEach(Columns, 0))"
-                }
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_9",
-              "name": "End Game",
-              "properties": {
-                "action": true,
-                "calculation": {
-                  "expr": "Set(Status, 'Ending')"
-                }
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_21",
-              "name": "Wrap Game",
-              "properties": {
-                "action": true,
-                "calculation": {
-                  "expr": "SendScore(Score)\nSet(Status, 'Ended')"
-                }
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_10",
-              "name": "Pause Game",
-              "properties": {
-                "action": true,
-                "calculation": {
-                  "expr": "Set(Status, 'Paused')\nGameTimer.Stop()"
-                }
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_11",
-              "name": "Continue Game",
-              "properties": {
-                "action": true,
-                "calculation": {
-                  "expr": "Set(Status, 'Playing')\nGameTimer.Start()"
-                }
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_20",
-              "name": "Send Score",
-              "properties": {
-                "input1": "score",
-                "action": true,
-                "calculation": {
-                  "expr": "Log('Sending score', score)\nSendMessage('parent', Record('score', score, 'url', CurrentUrl().text))"
-                }
               },
               "kind": "Function"
             },
@@ -946,7 +980,7 @@
                   "name": "Stop Game",
                   "properties": {
                     "action": {
-                      "expr": "GameTimer.Stop()\nEndGame()"
+                      "expr": "StopGame()"
                     },
                     "show": {
                       "expr": "GameRunning"
