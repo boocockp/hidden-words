@@ -78,7 +78,7 @@ function MainPage(props) {
         await EndGame()
     }), [GameTimer, EndGame]))
     const SendScore = _state.setObject(pathTo('SendScore'), React.useCallback(wrapFn(pathTo('SendScore'), 'calculation', async (score) => {
-        Log('Sending score', score)
+        Log('Send Score', score)
         await SendMessage('parent', Record('score', score, 'url', (await CurrentUrl()).text))
     }), []))
     const WrapGame = _state.setObject(pathTo('WrapGame'), React.useCallback(wrapFn(pathTo('WrapGame'), 'calculation', async () => {

@@ -240,7 +240,7 @@
                 "input1": "score",
                 "action": true,
                 "calculation": {
-                  "expr": "Log('Sending score', score)\nSendMessage('parent', Record('score', score, 'url', CurrentUrl().text))"
+                  "expr": "Log('Send Score', score)\nSendMessage('parent', Record('score', score, 'url', CurrentUrl().text))"
                 }
               },
               "kind": "Function"
@@ -339,7 +339,6 @@
             {
               "id": "function_12",
               "name": "Setup New Round",
-              "notes": "Specific setup for game, called by Start New Round",
               "properties": {
                 "action": true,
                 "calculation": {
@@ -351,7 +350,6 @@
             {
               "id": "function_23",
               "name": "Finish Round",
-              "notes": "Specific for game, called by End Round",
               "properties": {
                 "action": true,
                 "calculation": {
