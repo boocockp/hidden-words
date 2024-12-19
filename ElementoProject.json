@@ -120,19 +120,6 @@
               "kind": "Calculation"
             },
             {
-              "id": "calculation_29",
-              "name": "When Game Ending",
-              "properties": {
-                "calculation": {
-                  "expr": "Status == 'Ending'"
-                },
-                "whenTrueAction": {
-                  "expr": "WrapGame()"
-                }
-              },
-              "kind": "Calculation"
-            },
-            {
               "id": "timer_1",
               "name": "Game Timer",
               "properties": {
@@ -217,18 +204,7 @@
               "properties": {
                 "action": true,
                 "calculation": {
-                  "expr": "Set(Status, 'Ending')"
-                }
-              },
-              "kind": "Function"
-            },
-            {
-              "id": "function_21",
-              "name": "Wrap Game",
-              "properties": {
-                "action": true,
-                "calculation": {
-                  "expr": "SendScore(Score)\nSet(Status, 'Ended')"
+                  "expr": "SendScore(Score)\nSet(Status, 'Ended') "
                 }
               },
               "kind": "Function"
@@ -525,7 +501,9 @@
               "properties": {
                 "layout": "horizontal wrapped",
                 "styles": {
-                  "fontSize": "24"
+                  "fontSize": "24",
+                  "justifyContent": "space-between",
+                  "width": "100%"
                 }
               },
               "elements": [
@@ -538,8 +516,7 @@
                     },
                     "styles": {
                       "fontSize": "inherit",
-                      "color": "blue",
-                      "marginRight": "100"
+                      "color": "blue"
                     },
                     "show": {
                       "expr": "Or(GameRunning, Status == 'Ended')"
@@ -809,9 +786,9 @@
                       "top": "140",
                       "left": "150",
                       "translate": "-50% -50%",
-                      "backgroundColor": "lightblue",
+                      "backgroundColor": "white",
                       "borderRadius": "10",
-                      "border": "2px solid blue",
+                      "border": "2px solid green",
                       "minWidth": "18em",
                       "padding": "1em"
                     }

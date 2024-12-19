@@ -58,9 +58,14 @@ function MainPage(props) {
     const RoundSkipped = _state.setObject(pathTo('RoundSkipped'), new Data.State(stateProps(pathTo('RoundSkipped')).value(false).props))
     const IsRoundFailed = _state.setObject(pathTo('IsRoundFailed'), new Calculation.State(stateProps(pathTo('IsRoundFailed')).value(false).props))
     const GameRunning = _state.setObject(pathTo('GameRunning'), new Calculation.State(stateProps(pathTo('GameRunning')).value(Or(Status == 'Playing', Status == 'Paused')).props))
-    const EndGame = _state.setObject(pathTo('EndGame'), React.useCallback(wrapFn(pathTo('EndGame'), 'calculation', () => {
-        Set(Status, 'Ending')
-    }), [Status]))
+    const SendScore = _state.setObject(pathTo('SendScore'), React.useCallback(wrapFn(pathTo('SendScore'), 'calculation', async (score) => {
+        Log('Send Score', score)
+        await SendMessage('parent', Record('score', score, 'url', (await CurrentUrl()).text))
+    }), []))
+    const EndGame = _state.setObject(pathTo('EndGame'), React.useCallback(wrapFn(pathTo('EndGame'), 'calculation', async () => {
+        await SendScore(Score)
+        Set(Status, 'Ended')
+    }), [SendScore, Score, Status]))
     const GameTimer_endAction = React.useCallback(wrapFn(pathTo('GameTimer'), 'endAction', async ($timer) => {
         await EndGame()
     }), [EndGame])
@@ -77,18 +82,6 @@ function MainPage(props) {
         await GameTimer.Stop()
         await EndGame()
     }), [GameTimer, EndGame]))
-    const SendScore = _state.setObject(pathTo('SendScore'), React.useCallback(wrapFn(pathTo('SendScore'), 'calculation', async (score) => {
-        Log('Send Score', score)
-        await SendMessage('parent', Record('score', score, 'url', (await CurrentUrl()).text))
-    }), []))
-    const WrapGame = _state.setObject(pathTo('WrapGame'), React.useCallback(wrapFn(pathTo('WrapGame'), 'calculation', async () => {
-        await SendScore(Score)
-        Set(Status, 'Ended')
-    }), [SendScore, Score, Status]))
-    const WhenGameEnding_whenTrueAction = React.useCallback(wrapFn(pathTo('WhenGameEnding'), 'whenTrueAction', async () => {
-        await WrapGame()
-    }), [WrapGame])
-    const WhenGameEnding = _state.setObject(pathTo('WhenGameEnding'), new Calculation.State(stateProps(pathTo('WhenGameEnding')).value(Status == 'Ending').whenTrueAction(WhenGameEnding_whenTrueAction).props))
     const Word = _state.setObject(pathTo('Word'), new Data.State(stateProps(pathTo('Word')).props))
     const Columns = _state.setObject(pathTo('Columns'), new Data.State(stateProps(pathTo('Columns')).value([]).props))
     const ColumnOffsets = _state.setObject(pathTo('ColumnOffsets'), new Data.State(stateProps(pathTo('ColumnOffsets')).value([]).props))
@@ -203,16 +196,16 @@ function MainPage(props) {
     }), [StartNewGame])
     const StopGame_action = React.useCallback(wrapFn(pathTo('StopGame'), 'action', async () => {
         await StopGame()
-    }), [])
+    }), [StopGame])
     const PauseGame_action = React.useCallback(wrapFn(pathTo('PauseGame'), 'action', async () => {
         await PauseGame()
-    }), [])
+    }), [PauseGame])
     const ContinueGame_action = React.useCallback(wrapFn(pathTo('ContinueGame'), 'action', async () => {
         await ContinueGame()
-    }), [])
+    }), [ContinueGame])
     const Instructions_action = React.useCallback(wrapFn(pathTo('Instructions'), 'action', async () => {
         await Instructions.Show()
-    }), [])
+    }), [Instructions])
     Elemento.elementoDebug(() => eval(Elemento.useDebugExpr()))
 
     return React.createElement(Page, elProps(props.path).styles(elProps(pathTo('MainPage.Styles')).gap('4px').props).props,
@@ -225,7 +218,6 @@ function MainPage(props) {
         React.createElement(Calculation, elProps(pathTo('IsRoundComplete')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('RoundInPlay')).show(false).props),
         React.createElement(Calculation, elProps(pathTo('GameRunning')).show(false).props),
-        React.createElement(Calculation, elProps(pathTo('WhenGameEnding')).props),
         React.createElement(Timer, elProps(pathTo('GameTimer')).show(false).props),
         React.createElement(Data, elProps(pathTo('Word')).display(false).props),
         React.createElement(Data, elProps(pathTo('Columns')).display(false).props),
@@ -262,8 +254,8 @@ Click Next Word after each word to get another one.
 You have 3 minutes to find as many words as you can.`).props),
             React.createElement(Button, elProps(pathTo('StartGame2')).content('Start Game').appearance('filled').show(Not(GameRunning)).action(StartGame2_action).props),
     ),
-        React.createElement(Block, elProps(pathTo('StatsLayout')).layout('horizontal wrapped').styles(elProps(pathTo('StatsLayout.Styles')).fontSize('24').props).props,
-            React.createElement(TextElement, elProps(pathTo('ScoreDisplay')).show(Or(GameRunning, Status == 'Ended')).styles(elProps(pathTo('ScoreDisplay.Styles')).fontSize('inherit').color('blue').marginRight('100').props).content(Score + ' points').props),
+        React.createElement(Block, elProps(pathTo('StatsLayout')).layout('horizontal wrapped').styles(elProps(pathTo('StatsLayout.Styles')).fontSize('24').justifyContent('space-between').width('100%').props).props,
+            React.createElement(TextElement, elProps(pathTo('ScoreDisplay')).show(Or(GameRunning, Status == 'Ended')).styles(elProps(pathTo('ScoreDisplay.Styles')).fontSize('inherit').color('blue').props).content(Score + ' points').props),
             React.createElement(TextElement, elProps(pathTo('TimeDisplay')).show(GameRunning).styles(elProps(pathTo('TimeDisplay.Styles')).fontSize('inherit').color('green').props).content(Ceiling(GameTimer. remainingTime) + 's left').props),
             React.createElement(TextElement, elProps(pathTo('GameOver')).show(Status == 'Ended').styles(elProps(pathTo('GameOver.Styles')).fontSize('inherit').color('white').backgroundColor('green').padding('0 0.5em').borderRadius('8px').props).content('Game Over').props),
     ),
@@ -286,7 +278,7 @@ Or Start Game to dive straight in!`).props),
             React.createElement(TextElement, elProps(pathTo('RoundWon')).show(IsRoundWon).content('Correct! ' + Points() + ' points added').props),
             React.createElement(TextElement, elProps(pathTo('RoundFailed')).show(IsRoundFailed).content('Sorry - no points').props),
             React.createElement(TextElement, elProps(pathTo('RoundSkipped')).show(RoundSkipped).content('Skipped').props),
-            React.createElement(Block, elProps(pathTo('EndedPanel')).layout('vertical').show(Status == 'Ended').styles(elProps(pathTo('EndedPanel.Styles')).position('absolute').top('140').left('150').translate('-50% -50%').backgroundColor('lightblue').borderRadius('10').border('2px solid blue').minWidth('18em').padding('1em').props).props,
+            React.createElement(Block, elProps(pathTo('EndedPanel')).layout('vertical').show(Status == 'Ended').styles(elProps(pathTo('EndedPanel.Styles')).position('absolute').top('140').left('150').translate('-50% -50%').backgroundColor('white').borderRadius('10').border('2px solid green').minWidth('18em').padding('1em').props).props,
             React.createElement(TextElement, elProps(pathTo('Title')).styles(elProps(pathTo('Title.Styles')).fontFamily('Chelsea Market').fontSize('28').color('#039a03').props).content('Congratulations!').props),
             React.createElement(TextElement, elProps(pathTo('Score')).content('You have scored ' + Score + ' points!').props),
             React.createElement(TextElement, elProps(pathTo('Whatnext')).content('Click Start Game to play again').props),
