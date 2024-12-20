@@ -263,7 +263,7 @@ You have 3 minutes to find as many words as you can.`).props),
             React.createElement(TextElement, elProps(pathTo('Title')).styles(elProps(pathTo('Title.Styles')).color('#039a03').fontFamily('Chelsea Market').fontSize('28').props).content('Welcome!').props),
             React.createElement(TextElement, elProps(pathTo('ReadyText')).styles(elProps(pathTo('ReadyText.Styles')).fontSize('20').props).content(`Find words hidden in a grid of letters
 
-Click Instructions for full details
+Click Help for full details
 
 Or Start Game to dive straight in!`).props),
     ),
